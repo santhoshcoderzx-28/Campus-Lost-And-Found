@@ -11,6 +11,8 @@ import ItemDetails from './pages/ItemDetails.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Profile from './pages/Profile.jsx';
 import Admin from './pages/Admin.jsx';
+import EditItem from './pages/EditItem.jsx';
+import Info from './pages/Info.jsx';
 import NotFound from './pages/NotFound.jsx';
 
 export default function App() {
@@ -24,12 +26,24 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/items/:id" element={<ItemDetails />} />
+          <Route path="/about" element={<Info type="about" />} />
+          <Route path="/privacy" element={<Info type="privacy" />} />
+          <Route path="/terms" element={<Info type="terms" />} />
+          <Route path="/contact" element={<Info type="contact" />} />
 
           <Route
             path="/report"
             element={
               <ProtectedRoute>
                 <ReportItem />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/items/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditItem />
               </ProtectedRoute>
             }
           />

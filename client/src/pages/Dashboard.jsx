@@ -17,18 +17,21 @@ export default function Dashboard() {
   const [mine, setMine] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [recent, setRecent] = useState([]);
 
   const load = async () => {
     setLoading(true);
     try {
-      const [r, rec, my] = await Promise.all([
+      const [r, rec, my, latest] = await Promise.all([
         api.get('/items/my-reports'),
         api.get('/requests/received'),
         api.get('/requests/my-requests'),
+        api.get('/items', { params: { limit: 3 } }),
       ]);
       setReports(r.data.items);
       setReceived(rec.data.requests);
       setMine(my.data.requests);
+      setRecent(latest.data.items);
       setError('');
     } catch (err) {
       setError(err.message);
@@ -78,6 +81,21 @@ export default function Dashboard() {
           My requests ({mine.length})
         </button>
       </div>
+
+      {!loading && recent.length > 0 && (
+        <>
+          <h3 className="mt-3 mb-2">Recently added on campus</h3>
+          <div className="grid grid-3 mb-3">
+            {recent.map((item) => (
+              <Link key={item._id} to={`/items/${item._id}`} className="card card-pad">
+                <span className={`badge badge-${item.type}`}>{item.type}</span>
+                <h4 className="mt-1" style={{ fontSize: 15 }}>{item.title}</h4>
+                <p className="small muted">{item.location} · {formatDate(item.eventDate)}</p>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
 
       {loading ? <Loader /> : (
         <>

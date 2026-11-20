@@ -49,6 +49,15 @@ export default function Admin() {
     try { await api.delete(`/admin/items/${id}`); load(); } catch (err) { setError(err.message); }
   };
 
+  const reviewRequest = async (id, status) => {
+    try {
+      await api.put(`/requests/${id}/status`, { status });
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const setUserStatus = async (id, accountStatus) => {
     try { await api.put(`/admin/users/${id}/status`, { accountStatus }); load(); } catch (err) { setError(err.message); }
   };
@@ -141,7 +150,7 @@ export default function Admin() {
       {tab === 'requests' && (
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Item</th><th>Requester</th><th>Message</th><th>Status</th><th>Date</th></tr></thead>
+            <thead><tr><th>Item</th><th>Requester</th><th>Message</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
             <tbody>
               {requests.map((r) => (
                 <tr key={r._id}>
@@ -150,6 +159,14 @@ export default function Admin() {
                   <td className="small">{r.message}</td>
                   <td><span className={`badge badge-${r.status}`}>{r.status}</span></td>
                   <td className="small">{formatDate(r.createdAt)}</td>
+                  <td>
+                    {r.status === 'pending' ? (
+                      <div className="row">
+                        <button className="btn btn-sm" onClick={() => reviewRequest(r._id, 'approved')}>Approve</button>
+                        <button className="btn btn-sm btn-danger" onClick={() => reviewRequest(r._id, 'rejected')}>Reject</button>
+                      </div>
+                    ) : <span className="muted small">-</span>}
+                  </td>
                 </tr>
               ))}
             </tbody>

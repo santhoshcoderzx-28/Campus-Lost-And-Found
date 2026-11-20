@@ -31,7 +31,8 @@ export default function Navbar() {
           <NavLink to="/browse?type=found" className="nav-link" onClick={() => setOpen(false)}>Found</NavLink>
           {user && (
             <>
-              <NavLink to="/report" className={linkClass} onClick={() => setOpen(false)}>Report Item</NavLink>
+              <NavLink to="/report?type=lost" className="nav-link" onClick={() => setOpen(false)}>Report Lost</NavLink>
+              <NavLink to="/report?type=found" className="nav-link" onClick={() => setOpen(false)}>Report Found</NavLink>
               <NavLink to="/dashboard" className={linkClass} onClick={() => setOpen(false)}>Dashboard</NavLink>
             </>
           )}

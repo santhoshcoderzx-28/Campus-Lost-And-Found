@@ -25,6 +25,13 @@ export default function Footer() {
             <Link to="/profile">Profile</Link>
           </div>
           <div>
+            <h4>Information</h4>
+            <Link to="/about">About</Link>
+            <Link to="/contact">Contact</Link>
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
+          </div>
+          <div>
             <h4>University</h4>
             <p className="small">Sai University</p>
             <p className="small">School of Computing and Data Science</p>

@@ -1,0 +1,125 @@
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import api from '../api/client.js';
+import Loader from '../components/Loader.jsx';
+
+const CATEGORIES = ['Electronics', 'Books', 'ID Card', 'Wallet', 'Keys', 'Clothing', 'Accessories', 'Sports', 'Other'];
+const STATUSES = ['open', 'under-review', 'matched', 'recovered', 'closed'];
+
+export default function EditItem() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [form, setForm] = useState(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .get(`/items/${id}`)
+      .then((res) => {
+        const item = res.data.item;
+        setForm({
+          title: item.title,
+          description: item.description,
+          category: item.category,
+          type: item.type,
+          location: item.location,
+          eventDate: String(item.eventDate).slice(0, 10),
+          identifyingFeatures: item.identifyingFeatures || '',
+          status: item.status,
+        });
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const change = (key) => (event) => setForm({ ...form, [key]: event.target.value });
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setError('');
+    if (form.title.trim().length < 3) return setError('Item name must be at least 3 characters');
+    if (form.description.trim().length < 10) return setError('Description must be at least 10 characters');
+
+    setBusy(true);
+    try {
+      await api.put(`/items/${id}`, form);
+      navigate(`/items/${id}`);
+    } catch (err) {
+      setError(err.message);
+      setBusy(false);
+    }
+  };
+
+  if (loading) return <Loader />;
+  if (error && !form) return <div className="container section"><div className="alert alert-error">{error}</div></div>;
+  if (!form) return null;
+
+  return (
+    <div className="container section">
+      <span className="eyebrow">Edit report</span>
+      <h1 className="h2">Update this report</h1>
+      <p className="lead mb-3">Only you or an administrator can change this listing.</p>
+
+      {error && <div className="alert alert-error">{error}</div>}
+
+      <form className="card card-pad" onSubmit={submit} noValidate>
+        <div className="form-row">
+          <div className="field">
+            <label htmlFor="type">Type</label>
+            <select id="type" className="select" value={form.type} onChange={change('type')}>
+              <option value="lost">Lost</option>
+              <option value="found">Found</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="category">Category</label>
+            <select id="category" className="select" value={form.category} onChange={change('category')}>
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="field">
+          <label htmlFor="title">Item name</label>
+          <input id="title" className="input" value={form.title} onChange={change('title')} />
+        </div>
+
+        <div className="field">
+          <label htmlFor="description">Description</label>
+          <textarea id="description" className="textarea" value={form.description} onChange={change('description')} />
+        </div>
+
+        <div className="form-row">
+          <div className="field">
+            <label htmlFor="location">Location</label>
+            <input id="location" className="input" value={form.location} onChange={change('location')} />
+          </div>
+          <div className="field">
+            <label htmlFor="eventDate">Date</label>
+            <input id="eventDate" type="date" className="input" value={form.eventDate} onChange={change('eventDate')} />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="field">
+            <label htmlFor="identifyingFeatures">Identifying features</label>
+            <input id="identifyingFeatures" className="input" value={form.identifyingFeatures} onChange={change('identifyingFeatures')} />
+          </div>
+          <div className="field">
+            <label htmlFor="status">Status</label>
+            <select id="status" className="select" value={form.status} onChange={change('status')}>
+              {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="row">
+          <button className="btn" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
+          <button className="btn btn-ghost" type="button" onClick={() => navigate(`/items/${id}`)}>Cancel</button>
+        </div>
+      </form>
+    </div>
+  );
+}

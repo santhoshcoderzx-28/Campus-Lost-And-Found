@@ -110,7 +110,10 @@ export default function ItemDetails() {
         <aside className="card card-pad">
           {isOwner ? (
             <>
-              <h3>Requests on your report</h3>
+              <div className="row-between mb-2">
+                <h3>Requests on your report</h3>
+                <Link to={`/items/${item._id}/edit`} className="btn btn-sm btn-ghost">Edit report</Link>
+              </div>
               <p className="small muted mb-2">Review each request and approve the right one.</p>
               {requests.length === 0 && <p className="small muted">No requests yet.</p>}
               {requests.map((r) => (
