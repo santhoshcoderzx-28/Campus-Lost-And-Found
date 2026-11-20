@@ -133,7 +133,7 @@ export default function ItemDetails() {
                 </div>
               ))}
             </>
-          ) : item.type === 'found' ? (
+          ) : item.type === 'found' && !['recovered', 'closed'].includes(item.status) ? (
             <>
               <h3>Is this yours?</h3>
               <p className="small muted mb-2">

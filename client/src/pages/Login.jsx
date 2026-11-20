@@ -58,7 +58,7 @@ export default function Login() {
           New here? <Link to="/register" style={{ color: 'var(--navy-700)', fontWeight: 600 }}>Create an account</Link>
         </p>
         <p className="small center muted">
-          Demo: demo@saiuniversity.edu.in / demo123 &nbsp;|&nbsp; Admin: admin@saiuniversity.edu.in / admin123
+          Use your university email to sign in. Ask the campus lost and found desk if you need an account.
         </p>
       </div>
     </div>

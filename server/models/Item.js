@@ -21,14 +21,16 @@ const toApi = (row) =>
     category: row.category,
     type: row.type,
     location: row.location,
-    eventDate: row.event_date,
+    eventDate:
+      row.event_date instanceof Date
+        ? row.event_date.toISOString().slice(0, 10)
+        : String(row.event_date || '').slice(0, 10),
     identifyingFeatures: row.identifying_features || '',
     imageUrl: row.image_url || '',
     status: row.status,
     reportedBy: {
       _id: row.reported_by,
       name: row.reporter_name,
-      studentId: row.reporter_student_id || '',
     },
     createdAt: row.created_at,
     updatedAt: row.updated_at,

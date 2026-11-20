@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// In production the API is served by the same origin, so '/api' is the safe default
+const baseURL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({ baseURL });
 
@@ -17,6 +18,14 @@ api.interceptors.response.use(
   (error) => {
     const url = (error.config && error.config.url) || '';
     const isAuthEndpoint = url.startsWith('/auth/login') || url.startsWith('/auth/register');
+    const suspended =
+      error.response && error.response.status === 403 &&
+      String((error.response.data && error.response.data.message) || '').includes('suspended');
+    if (suspended) {
+      localStorage.removeItem('clf_token');
+      localStorage.removeItem('clf_user');
+      window.dispatchEvent(new Event('clf:unauthorized'));
+    }
     if (error.response && error.response.status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('clf_token');
       localStorage.removeItem('clf_user');

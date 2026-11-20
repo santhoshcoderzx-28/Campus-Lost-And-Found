@@ -15,7 +15,7 @@ const client = configured
 
 async function uploadImage(file) {
   if (!configured) {
-    const error = new Error('Image storage is not configured on the server');
+    const error = new Error('Photo storage is not configured on the server');
     error.status = 503;
     throw error;
   }
@@ -27,7 +27,11 @@ async function uploadImage(file) {
     contentType: file.mimetype,
     upsert: false,
   });
-  if (error) throw new Error(`Image upload failed: ${error.message}`);
+  if (error) {
+    const uploadError = new Error(`Photo upload failed: ${error.message}`);
+    uploadError.status = 502;
+    throw uploadError;
+  }
 
   const { data } = client.storage.from(BUCKET).getPublicUrl(filename);
   return { url: data.publicUrl, publicId: filename };

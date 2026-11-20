@@ -169,7 +169,12 @@ exports.updateItem = async (req, res, next) => {
       updates.eventDate = d.toISOString().slice(0, 10);
     }
 
+    // Only an administrator may change the lifecycle status: otherwise an owner
+    // could mark their own item recovered and skip the recovery-request flow.
     if (req.body.status !== undefined) {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Only an administrator can change the status' });
+      }
       if (!Item.STATUSES.includes(req.body.status)) {
         return res.status(400).json({ success: false, message: `status must be one of ${Item.STATUSES.join(', ')}` });
       }

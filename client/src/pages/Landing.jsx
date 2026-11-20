@@ -10,6 +10,7 @@ export default function Landing() {
   const [stats, setStats] = useState(null);
   const [recent, setRecent] = useState({ lost: [], found: [] });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -23,6 +24,7 @@ export default function Landing() {
         setRecent({ lost: lostRes.data.items, found: foundRes.data.items });
       } catch (error) {
         setStats(null);
+        setLoadError('Could not load the latest reports. Please refresh the page.');
       } finally {
         setLoading(false);
       }
@@ -56,6 +58,12 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {loadError && (
+        <div className="container mt-2">
+          <div className="alert alert-error">{loadError}</div>
+        </div>
+      )}
 
       <section className="section container">
         <span className="eyebrow">Overview</span>

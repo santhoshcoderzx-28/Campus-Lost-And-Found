@@ -17,7 +17,25 @@ const app = express();
 app.set('trust proxy', 1);
 
 // security and parsing middleware
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        // item photos are served from Supabase Storage on another origin
+        imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        fontSrc: ["'self'", 'data:'],
+        connectSrc: ["'self'", 'https:'],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'self'"],
+      },
+    },
+    // allow the browser to load the cross-origin image bytes
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(',').map((o) => o.trim()).filter(Boolean)
   : [];
