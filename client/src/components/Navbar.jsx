@@ -1,0 +1,67 @@
+import { useState } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Search, Menu, X, LogOut, User, LayoutDashboard, Shield } from 'lucide-react';
+import { useAuth } from '../context/AuthContext.jsx';
+
+export default function Navbar() {
+  const [open, setOpen] = useState(false);
+  const { user, isAdmin, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const linkClass = ({ isActive }) => `nav-link${isActive ? ' active' : ''}`;
+
+  const handleLogout = async () => {
+    await logout();
+    setOpen(false);
+    navigate('/');
+  };
+
+  return (
+    <header className="navbar">
+      <div className="container navbar-inner">
+        <Link to="/" className="brand" onClick={() => setOpen(false)}>
+          <span className="brand-mark"><Search size={18} /></span>
+          Campus Lost &amp; Found
+        </Link>
+
+        <nav className={`nav-links${open ? ' open' : ''}`}>
+          <NavLink to="/" end className={linkClass} onClick={() => setOpen(false)}>Home</NavLink>
+          <NavLink to="/browse" className={linkClass} onClick={() => setOpen(false)}>Browse Items</NavLink>
+          <NavLink to="/browse?type=lost" className="nav-link" onClick={() => setOpen(false)}>Lost</NavLink>
+          <NavLink to="/browse?type=found" className="nav-link" onClick={() => setOpen(false)}>Found</NavLink>
+          {user && (
+            <>
+              <NavLink to="/report" className={linkClass} onClick={() => setOpen(false)}>Report Item</NavLink>
+              <NavLink to="/dashboard" className={linkClass} onClick={() => setOpen(false)}>Dashboard</NavLink>
+            </>
+          )}
+          {isAdmin && (
+            <NavLink to="/admin" className={linkClass} onClick={() => setOpen(false)}>Admin</NavLink>
+          )}
+        </nav>
+
+        <div className="nav-actions">
+          {user ? (
+            <>
+              <Link to="/profile" className="nav-link" title="My profile">
+                <User size={15} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+                {user.name.split(' ')[0]}
+              </Link>
+              <button className="btn btn-sm btn-outline-light" onClick={handleLogout}>
+                <LogOut size={14} /> Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="nav-link">Login</Link>
+              <Link to="/register" className="btn btn-sm btn-accent">Register</Link>
+            </>
+          )}
+          <button className="nav-toggle" onClick={() => setOpen(!open)} aria-label="Menu">
+            {open ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
