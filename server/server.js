@@ -1,6 +1,8 @@
 // Entry point of the REST API
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -34,6 +36,19 @@ app.get('/api/health', async (req, res) => {
   const ok = await testConnection();
   res.status(ok ? 200 : 500).json({ success: ok, status: ok ? 'ok' : 'degraded', time: new Date().toISOString() });
 });
+
+// Serve the built React app from this same service when client/dist exists.
+// In local development you run the Vite dev server on 5173, so this block is
+// skipped and nothing changes for local work.
+const clientDist = path.join(__dirname, '..', 'client', 'dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+  console.log('Serving the React build from client/dist');
+}
 
 app.use(notFound);
 app.use(errorHandler);

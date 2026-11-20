@@ -203,7 +203,20 @@ Unique compound index on (itemId, requesterId) so one person cannot request the 
 4. Atlas → Network Access → allow `0.0.0.0/0`.
 5. Run `npm run seed` once from your machine against the Atlas database.
 
-**Frontend (Render Static Site)**
+**Frontend (same service - recommended)**
+The Express server already serves the built React app when `client/dist` exists, so one
+Render service hosts both the API and the interface.
+
+1. In the backend service, set the Build Command to:
+   `npm install && cd ../client && npm install && npm run build`
+2. Add the environment variable `VITE_API_URL=/api` (same origin, no CORS needed).
+3. Set `CLIENT_URL` to the service URL, e.g. `https://your-service.onrender.com`.
+4. Deploy. `https://your-service.onrender.com` serves the React app and
+   `https://your-service.onrender.com/api/...` serves the API.
+
+Local development is unchanged: run the API on 5000 and `npm run dev` in `client` on 5173.
+
+**Alternative: separate Static Site**
 1. Render → New → Static Site → same repo → Root Directory `client`,
    Build `npm install && npm run build`, Publish directory `dist`.
 2. Environment variable `VITE_API_URL=https://your-backend.onrender.com/api`.
