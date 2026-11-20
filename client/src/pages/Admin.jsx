@@ -17,8 +17,8 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [dash, u, i, r] = await Promise.all([
         api.get('/admin/dashboard'),
@@ -41,25 +41,25 @@ export default function Admin() {
   useEffect(() => { load(); }, []);
 
   const setItemStatus = async (id, status) => {
-    try { await api.put(`/admin/items/${id}/status`, { status }); load(); } catch (err) { setError(err.message); }
+    try { await api.put(`/admin/items/${id}/status`, { status }); load(true); } catch (err) { setError(err.message); }
   };
 
   const removeItem = async (id) => {
     if (!window.confirm('Remove this report?')) return;
-    try { await api.delete(`/admin/items/${id}`); load(); } catch (err) { setError(err.message); }
+    try { await api.delete(`/admin/items/${id}`); load(true); } catch (err) { setError(err.message); }
   };
 
   const reviewRequest = async (id, status) => {
     try {
       await api.put(`/requests/${id}/status`, { status });
-      load();
+      load(true);
     } catch (err) {
       setError(err.message);
     }
   };
 
   const setUserStatus = async (id, accountStatus) => {
-    try { await api.put(`/admin/users/${id}/status`, { accountStatus }); load(); } catch (err) { setError(err.message); }
+    try { await api.put(`/admin/users/${id}/status`, { accountStatus }); load(true); } catch (err) { setError(err.message); }
   };
 
   if (loading) return <Loader />;
@@ -84,21 +84,21 @@ export default function Admin() {
         <>
           <StatsRow
             items={[
-              { label: 'Users', value: data.stats.totalUsers },
-              { label: 'Lost reports', value: data.stats.totalLost },
-              { label: 'Found reports', value: data.stats.totalFound },
-              { label: 'Recovered', value: data.stats.recovered },
-              { label: 'Pending requests', value: data.stats.pendingRequests },
-              { label: 'Total reports', value: data.stats.totalReports },
+              { label: 'Users', value: data.stats.totalUsers ?? '-' },
+              { label: 'Lost reports', value: data.stats.totalLost ?? '-' },
+              { label: 'Found reports', value: data.stats.totalFound ?? '-' },
+              { label: 'Recovered', value: data.stats.recovered ?? '-' },
+              { label: 'Pending requests', value: data.stats.pendingRequests ?? '-' },
+              { label: 'Total reports', value: data.stats.totalReports ?? '-' },
             ]}
           />
 
           <h3 className="mt-3 mb-2">Reports by category</h3>
           <div className="card card-pad">
-            {data.stats.byCategory.map((c) => (
+            {(data.stats.byCategory || []).map((c) => (
               <div key={c.category} className="row" style={{ marginBottom: 8 }}>
                 <span className="small" style={{ width: 120 }}>{c.category}</span>
-                <span style={{ height: 10, borderRadius: 5, background: 'var(--navy-700)', width: `${Math.max(6, (c.count / Math.max(...data.stats.byCategory.map((x) => x.count))) * 60)}%` }} />
+                <span style={{ height: 10, borderRadius: 5, background: 'var(--navy-700)', width: `${Math.max(6, (c.count / Math.max(1, ...(data.stats.byCategory || []).map((x) => x.count))) * 60)}%` }} />
                 <span className="small muted">{c.count}</span>
               </div>
             ))}
@@ -109,7 +109,7 @@ export default function Admin() {
             <table>
               <thead><tr><th>Item</th><th>Type</th><th>Reported by</th><th>Status</th><th>Date</th></tr></thead>
               <tbody>
-                {data.recentActivity.map((item) => (
+                {(data.recentActivity || []).map((item) => (
                   <tr key={item._id}>
                     <td><Link to={`/items/${item._id}`} style={{ fontWeight: 600 }}>{item.title}</Link></td>
                     <td><span className={`badge badge-${item.type}`}>{item.type}</span></td>

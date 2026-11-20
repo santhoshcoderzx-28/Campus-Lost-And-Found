@@ -13,11 +13,17 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 
+// Render (and any reverse proxy) terminates TLS, so trust one hop for req.ip
+app.set('trust proxy', 1);
+
 // security and parsing middleware
 app.use(helmet());
+const allowedOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map((o) => o.trim()).filter(Boolean)
+  : [];
 app.use(
   cors({
-    origin: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : '*',
+    origin: allowedOrigins.length ? allowedOrigins : true, // reflect the request origin
     credentials: true,
   })
 );

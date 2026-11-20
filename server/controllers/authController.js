@@ -12,6 +12,9 @@ exports.register = async (req, res, next) => {
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Name, email and password are required' });
     }
+    if (typeof name !== 'string' || typeof email !== 'string') {
+      return res.status(400).json({ success: false, message: 'Name and email must be text' });
+    }
     if (typeof password !== 'string' || password.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
     }
@@ -79,6 +82,9 @@ exports.updateProfile = async (req, res, next) => {
     const row = await User.updateProfile(req.user.id, { name, studentId });
     res.json({ success: true, user: User.toPublic(row) });
   } catch (error) {
+    if (error.code === '23514') {
+      return res.status(400).json({ success: false, message: 'Name must be between 2 and 80 characters' });
+    }
     next(error);
   }
 };

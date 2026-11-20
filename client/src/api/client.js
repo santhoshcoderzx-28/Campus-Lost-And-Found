@@ -18,6 +18,8 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('clf_token');
       localStorage.removeItem('clf_user');
+      // tell AuthContext so the navbar and ProtectedRoute drop the session
+      window.dispatchEvent(new Event('clf:unauthorized'));
     }
     const message =
       (error.response && error.response.data && error.response.data.message) ||

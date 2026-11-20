@@ -5,6 +5,13 @@ import api from '../api/client.js';
 
 const CATEGORIES = ['Electronics', 'Books', 'ID Card', 'Wallet', 'Keys', 'Clothing', 'Accessories', 'Sports', 'Other'];
 
+// Local calendar date (not UTC), so IST users do not get yesterday
+const todayLocal = () => {
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+};
+
 export default function ReportItem() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -14,7 +21,7 @@ export default function ReportItem() {
     category: '',
     description: '',
     location: '',
-    eventDate: new Date().toISOString().slice(0, 10),
+    eventDate: todayLocal(),
     identifyingFeatures: '',
   });
   const [file, setFile] = useState(null);
@@ -23,6 +30,14 @@ export default function ReportItem() {
   const [busy, setBusy] = useState(false);
   const [matches, setMatches] = useState(null);
   const boxRef = useRef(null);
+
+  // the navbar links change ?type= without remounting this page
+  useEffect(() => {
+    const fromUrl = params.get('type');
+    if (fromUrl === 'lost' || fromUrl === 'found') {
+      setForm((current) => ({ ...current, type: fromUrl }));
+    }
+  }, [params]);
 
   const change = (key) => (event) => setForm({ ...form, [key]: event.target.value });
 

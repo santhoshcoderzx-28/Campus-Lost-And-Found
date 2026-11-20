@@ -82,50 +82,55 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {!loading && recent.length > 0 && (
-        <>
-          <h3 className="mt-3 mb-2">Recently added on campus</h3>
-          <div className="grid grid-3 mb-3">
-            {recent.map((item) => (
-              <Link key={item._id} to={`/items/${item._id}`} className="card card-pad">
-                <span className={`badge badge-${item.type}`}>{item.type}</span>
-                <h4 className="mt-1" style={{ fontSize: 15 }}>{item.title}</h4>
-                <p className="small muted">{item.location} · {formatDate(item.eventDate)}</p>
-              </Link>
-            ))}
-          </div>
-        </>
-      )}
-
       {loading ? <Loader /> : (
         <>
           {tab === 'reports' && (
-            reports.length === 0 ? (
-              <EmptyState title="No reports yet" text="Report a lost or found item to get started."
-                action={<Link to="/report" className="btn btn-sm">Report an item</Link>} />
-            ) : (
-              <div className="table-wrap">
-                <table>
-                  <thead><tr><th>Item</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
-                  <tbody>
-                    {reports.map((item) => (
-                      <tr key={item._id}>
-                        <td><Link to={`/items/${item._id}`} style={{ fontWeight: 600 }}>{item.title}</Link><br /><span className="muted small">{item.location}</span></td>
-                        <td><span className={`badge badge-${item.type}`}>{item.type}</span></td>
-                        <td><span className={`badge badge-${item.status}`}>{item.status}</span></td>
-                        <td className="small">{formatDate(item.eventDate)}</td>
-                        <td>
-                          <div className="row">
-                            <Link to={`/items/${item._id}`} className="btn btn-sm btn-ghost">Open</Link>
-                            <button className="btn btn-sm btn-danger" onClick={() => removeReport(item._id)}>Delete</button>
-                          </div>
-                        </td>
-                      </tr>
+            <>
+              {recent.length > 0 && (
+                <>
+                  <h3 className="mt-2 mb-2">Recently added on campus</h3>
+                  <div className="grid grid-3 mb-3">
+                    {recent.map((item) => (
+                      <Link key={item._id} to={`/items/${item._id}`} className="card card-pad">
+                        <span className={`badge badge-${item.type}`}>{item.type}</span>
+                        <h4 className="mt-1" style={{ fontSize: 15 }}>{item.title}</h4>
+                        <p className="small muted">{item.location} · {formatDate(item.eventDate)}</p>
+                      </Link>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )
+                  </div>
+                </>
+              )}
+
+              {reports.length === 0 ? (
+                <EmptyState
+                  title="No reports yet"
+                  text="Report a lost or found item to get started."
+                  action={<Link to="/report" className="btn btn-sm">Report an item</Link>}
+                />
+              ) : (
+                <div className="table-wrap">
+                  <table>
+                    <thead><tr><th>Item</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+                    <tbody>
+                      {reports.map((item) => (
+                        <tr key={item._id}>
+                          <td><Link to={`/items/${item._id}`} style={{ fontWeight: 600 }}>{item.title}</Link><br /><span className="muted small">{item.location}</span></td>
+                          <td><span className={`badge badge-${item.type}`}>{item.type}</span></td>
+                          <td><span className={`badge badge-${item.status}`}>{item.status}</span></td>
+                          <td className="small">{formatDate(item.eventDate)}</td>
+                          <td>
+                            <div className="row">
+                              <Link to={`/items/${item._id}`} className="btn btn-sm btn-ghost">Open</Link>
+                              <button className="btn btn-sm btn-danger" onClick={() => removeReport(item._id)}>Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
 
           {tab === 'received' && (

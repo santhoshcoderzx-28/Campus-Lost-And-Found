@@ -1,4 +1,5 @@
 const Item = require('../models/Item');
+const { pool } = require('../config/database');
 const RecoveryRequest = require('../models/RecoveryRequest');
 const { isUuid } = require('../utils/validate');
 
@@ -74,7 +75,7 @@ exports.getRequest = async (req, res, next) => {
     if (!row) return res.status(404).json({ success: false, message: 'Request not found' });
 
     const isRequester = row.requester_id === req.user.id;
-    const isOwner = row.item_owner_id ? row.item_owner_id === req.user.id : false;
+    const isOwner = row.item_owner_id === req.user.id;
     if (!isRequester && !isOwner && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Not authorized to view this request' });
     }
@@ -125,14 +126,42 @@ exports.updateRequestStatus = async (req, res, next) => {
       return res.status(400).json({ success: false, message: `This request is already ${row.status}` });
     }
 
-    const updated = await RecoveryRequest.setStatus(row.id, status, req.user.id);
+    // One transaction: the claim, the item status and the competing requests
+    // must all change together, and the row lock stops a double approval.
+    const client = await pool.connect();
+    try {
+      await client.query('begin');
+      const locked = await client.query(
+        `select status from app_v2.recovery_requests where id = $1 for update`,
+        [row.id]
+      );
+      if (locked.rows[0].status !== 'pending') {
+        await client.query('rollback');
+        return res.status(400).json({ success: false, message: `This request is already ${locked.rows[0].status}` });
+      }
 
-    // Approving recovers the item and closes the other pending requests
-    if (status === 'approved') {
-      await Item.update(item.id, { status: 'recovered' });
-      await RecoveryRequest.rejectOtherPending(item.id, row.id, req.user.id);
+      await client.query(
+        `update app_v2.recovery_requests set status = $1, reviewed_by = $2 where id = $3`,
+        [status, req.user.id, row.id]
+      );
+
+      if (status === 'approved') {
+        await client.query(`update app_v2.items set status = 'recovered', updated_at = now() where id = $1`, [item.id]);
+        await client.query(
+          `update app_v2.recovery_requests set status = 'rejected', reviewed_by = $1
+           where item_id = $2 and status = 'pending' and id <> $3`,
+          [req.user.id, item.id, row.id]
+        );
+      }
+      await client.query('commit');
+    } catch (error) {
+      try { await client.query('rollback'); } catch (e) { /* ignore */ }
+      throw error;
+    } finally {
+      client.release();
     }
 
+    const updated = await RecoveryRequest.findById(row.id);
     res.json({ success: true, request: RecoveryRequest.toApi(updated) });
   } catch (error) {
     next(error);

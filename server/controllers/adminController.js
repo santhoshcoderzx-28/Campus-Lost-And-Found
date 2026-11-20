@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Item = require('../models/Item');
 const RecoveryRequest = require('../models/RecoveryRequest');
 const { isUuid } = require('../utils/validate');
+const { destroyImage } = require('../config/storage');
 
 // GET /api/admin/dashboard
 exports.dashboard = async (req, res, next) => {
@@ -45,8 +46,17 @@ exports.listUsers = async (req, res, next) => {
 // GET /api/admin/items
 exports.listItems = async (req, res, next) => {
   try {
-    const rows = await Item.list({ filters: {}, page: 1, limit: 200, sort: 'newest' });
-    res.json({ success: true, count: rows.items.length, items: rows.items.map(Item.toApi) });
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
+    const rows = await Item.list({ filters: {}, page, limit, sort: 'newest' });
+    res.json({
+      success: true,
+      count: rows.items.length,
+      total: rows.total,
+      page,
+      pages: Math.ceil(rows.total / limit) || 1,
+      items: rows.items.map(Item.toApi),
+    });
   } catch (error) {
     next(error);
   }
@@ -109,6 +119,7 @@ exports.deleteItem = async (req, res, next) => {
     if (!existing) return res.status(404).json({ success: false, message: 'Item not found' });
 
     await RecoveryRequest.removeByItem(existing.id);
+    await destroyImage(existing.image_public_id);
     await Item.remove(existing.id);
     res.json({ success: true, message: 'Report removed by administrator' });
   } catch (error) {

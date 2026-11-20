@@ -22,6 +22,23 @@ export default function Browse() {
     sort: params.get('sort') || 'newest',
   });
   const [page, setPage] = useState(1);
+
+  // The navbar links (?type=lost / ?type=found) change the URL only, so the
+  // form state has to follow the URL, not just seed from it once.
+  useEffect(() => {
+    setFilters((current) => ({
+      ...current,
+      q: params.get('q') || '',
+      type: params.get('type') || '',
+      category: params.get('category') || '',
+      location: params.get('location') || '',
+      status: params.get('status') || '',
+      dateFrom: params.get('dateFrom') || '',
+      dateTo: params.get('dateTo') || '',
+      sort: params.get('sort') || 'newest',
+    }));
+    setPage(1);
+  }, [params]);
   const [data, setData] = useState({ items: [], total: 0, pages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

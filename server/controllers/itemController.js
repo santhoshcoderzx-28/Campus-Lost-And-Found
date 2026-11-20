@@ -6,6 +6,15 @@ const { isUuid } = require('../utils/validate');
 // GET /api/items
 exports.listItems = async (req, res, next) => {
   try {
+    const { dateFrom, dateTo, reportedBy } = req.query;
+    const isDate = (value) => !value || /^\d{4}-\d{2}-\d{2}$/.test(String(value));
+    if (!isDate(dateFrom) || !isDate(dateTo)) {
+      return res.status(400).json({ success: false, message: 'dateFrom and dateTo must be YYYY-MM-DD' });
+    }
+    if (reportedBy && !isUuid(reportedBy)) {
+      return res.status(400).json({ success: false, message: 'Invalid reportedBy id' });
+    }
+
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 9));
     const { total, items } = await Item.list({
@@ -88,18 +97,24 @@ exports.createItem = async (req, res, next) => {
     let image = { url: '', publicId: '' };
     if (req.file) image = await uploadImage(req.file);
 
-    const row = await Item.create({
-      title,
-      description,
-      category,
-      type,
-      location,
-      eventDate: parsedDate.toISOString().slice(0, 10),
-      identifyingFeatures,
-      imageUrl: image.url,
-      imagePublicId: image.publicId,
-      reportedBy: req.user.id,
-    });
+    let row;
+    try {
+      row = await Item.create({
+        title,
+        description,
+        category,
+        type,
+        location,
+        eventDate: parsedDate.toISOString().slice(0, 10),
+        identifyingFeatures,
+        imageUrl: image.url,
+        imagePublicId: image.publicId,
+        reportedBy: req.user.id,
+      });
+    } catch (error) {
+      if (image.publicId) await destroyImage(image.publicId);
+      throw error;
+    }
 
     const matches = await Item.findMatches(row);
 

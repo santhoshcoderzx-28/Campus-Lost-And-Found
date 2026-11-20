@@ -5,6 +5,7 @@ const SELECT = `
   select r.*,
          i.title as item_title, i.type as item_type, i.status as item_status,
          i.location as item_location, i.image_url as item_image_url,
+         i.reported_by as item_owner_id,
          u.name as requester_name, u.email as requester_email, u.student_id as requester_student_id
   from app_v2.recovery_requests r
   join app_v2.items i on i.id = r.item_id
@@ -21,6 +22,7 @@ const toApi = (row) =>
       status: row.item_status,
       location: row.item_location,
       imageUrl: row.item_image_url,
+      reportedBy: row.item_owner_id,
     },
     requester: {
       _id: row.requester_id,

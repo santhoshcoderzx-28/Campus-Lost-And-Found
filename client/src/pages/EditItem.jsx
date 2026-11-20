@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client.js';
 import Loader from '../components/Loader.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const CATEGORIES = ['Electronics', 'Books', 'ID Card', 'Wallet', 'Keys', 'Clothing', 'Accessories', 'Sports', 'Other'];
 const STATUSES = ['open', 'under-review', 'matched', 'recovered', 'closed'];
@@ -9,6 +10,7 @@ const STATUSES = ['open', 'under-review', 'matched', 'recovered', 'closed'];
 export default function EditItem() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [form, setForm] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -19,6 +21,11 @@ export default function EditItem() {
       .get(`/items/${id}`)
       .then((res) => {
         const item = res.data.item;
+        const isOwner = item.reportedBy && user && item.reportedBy._id === user._id;
+        if (!isOwner && (!user || user.role !== 'admin')) {
+          navigate(`/items/${id}`, { replace: true });
+          return;
+        }
         setForm({
           title: item.title,
           description: item.description,
@@ -32,7 +39,7 @@ export default function EditItem() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, navigate, user]);
 
   const change = (key) => (event) => setForm({ ...form, [key]: event.target.value });
 

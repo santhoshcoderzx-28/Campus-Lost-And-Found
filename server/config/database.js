@@ -40,8 +40,11 @@ async function query(text, params) {
   try {
     return await pool.query(text, params);
   } catch (error) {
-    if (!isConnectionError(error)) throw error;
-    console.warn('Retrying query after a connection error:', error.message);
+    // Only a read is safe to repeat: a write may already have committed
+    // before the connection dropped, so retrying it could duplicate a row.
+    const isRead = /^\s*select/i.test(text);
+    if (!isRead || !isConnectionError(error)) throw error;
+    console.warn('Retrying read after a connection error:', error.message);
     return pool.query(text, params);
   }
 }

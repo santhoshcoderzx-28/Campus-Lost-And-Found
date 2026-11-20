@@ -5,9 +5,22 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem('clf_user');
-    return raw ? JSON.parse(raw) : null;
+    try {
+      const raw = localStorage.getItem('clf_user');
+      const parsed = raw ? JSON.parse(raw) : null;
+      return parsed && parsed._id ? parsed : null;
+    } catch (error) {
+      localStorage.removeItem('clf_user');
+      return null;
+    }
   });
+
+  // A 401 anywhere in the app ends the session immediately
+  useEffect(() => {
+    const onUnauthorized = () => setUser(null);
+    window.addEventListener('clf:unauthorized', onUnauthorized);
+    return () => window.removeEventListener('clf:unauthorized', onUnauthorized);
+  }, []);
   const [loading, setLoading] = useState(false);
 
   // verify the stored token once on load
