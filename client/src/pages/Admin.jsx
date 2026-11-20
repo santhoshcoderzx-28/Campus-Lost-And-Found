@@ -14,6 +14,8 @@ export default function Admin() {
   const [users, setUsers] = useState([]);
   const [items, setItems] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [itemPage, setItemPage] = useState(1);
+  const [itemPages, setItemPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -23,12 +25,13 @@ export default function Admin() {
       const [dash, u, i, r] = await Promise.all([
         api.get('/admin/dashboard'),
         api.get('/admin/users'),
-        api.get('/admin/items'),
+        api.get('/admin/items', { params: { page: itemPage, limit: 50 } }),
         api.get('/admin/requests'),
       ]);
       setData(dash.data);
       setUsers(u.data.users);
       setItems(i.data.items);
+      setItemPages(i.data.pages || 1);
       setRequests(r.data.requests);
       setError('');
     } catch (err) {
@@ -38,7 +41,7 @@ export default function Admin() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [itemPage]);
 
   const setItemStatus = async (id, status) => {
     try { await api.put(`/admin/items/${id}/status`, { status }); load(true); } catch (err) { setError(err.message); }
@@ -125,6 +128,7 @@ export default function Admin() {
       )}
 
       {tab === 'items' && (
+        <>
         <div className="table-wrap">
           <table>
             <thead><tr><th>Item</th><th>Type</th><th>Reported by</th><th>Status</th><th>Actions</th></tr></thead>
@@ -145,6 +149,14 @@ export default function Admin() {
             </tbody>
           </table>
         </div>
+        {itemPages > 1 && (
+          <div className="pager">
+            <button className="btn btn-sm btn-ghost" disabled={itemPage <= 1} onClick={() => setItemPage(itemPage - 1)}>Previous</button>
+            <span className="small muted">Page {itemPage} of {itemPages}</span>
+            <button className="btn btn-sm btn-ghost" disabled={itemPage >= itemPages} onClick={() => setItemPage(itemPage + 1)}>Next</button>
+          </div>
+        )}
+        </>
       )}
 
       {tab === 'requests' && (

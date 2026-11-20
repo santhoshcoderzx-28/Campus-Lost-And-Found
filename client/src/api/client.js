@@ -15,7 +15,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
+    const url = (error.config && error.config.url) || '';
+    const isAuthEndpoint = url.startsWith('/auth/login') || url.startsWith('/auth/register');
+    if (error.response && error.response.status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('clf_token');
       localStorage.removeItem('clf_user');
       // tell AuthContext so the navbar and ProtectedRoute drop the session

@@ -102,7 +102,8 @@ exports.changePassword = async (req, res, next) => {
 
     const ok = await User.comparePassword(String(currentPassword), req.user.password_hash);
     if (!ok) {
-      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+      // 400, not 401: the session is valid, the submitted password is not
+      return res.status(400).json({ success: false, message: 'Current password is incorrect' });
     }
 
     await User.updatePassword(req.user.id, String(newPassword));

@@ -22,7 +22,7 @@ const toApi = (row) =>
       status: row.item_status,
       location: row.item_location,
       imageUrl: row.item_image_url,
-      reportedBy: row.item_owner_id,
+      reportedById: row.item_owner_id,
     },
     requester: {
       _id: row.requester_id,

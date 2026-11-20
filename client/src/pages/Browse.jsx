@@ -26,8 +26,7 @@ export default function Browse() {
   // The navbar links (?type=lost / ?type=found) change the URL only, so the
   // form state has to follow the URL, not just seed from it once.
   useEffect(() => {
-    setFilters((current) => ({
-      ...current,
+    const next = {
       q: params.get('q') || '',
       type: params.get('type') || '',
       category: params.get('category') || '',
@@ -36,7 +35,11 @@ export default function Browse() {
       dateFrom: params.get('dateFrom') || '',
       dateTo: params.get('dateTo') || '',
       sort: params.get('sort') || 'newest',
-    }));
+    };
+    // only re-render when the URL really differs, so mounting does not refetch
+    setFilters((current) =>
+      Object.keys(next).every((key) => current[key] === next[key]) ? current : next
+    );
     setPage(1);
   }, [params]);
   const [data, setData] = useState({ items: [], total: 0, pages: 1 });

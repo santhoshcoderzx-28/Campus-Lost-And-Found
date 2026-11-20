@@ -7,9 +7,15 @@ const { isUuid } = require('../utils/validate');
 exports.listItems = async (req, res, next) => {
   try {
     const { dateFrom, dateTo, reportedBy } = req.query;
-    const isDate = (value) => !value || /^\d{4}-\d{2}-\d{2}$/.test(String(value));
-    if (!isDate(dateFrom) || !isDate(dateTo)) {
-      return res.status(400).json({ success: false, message: 'dateFrom and dateTo must be YYYY-MM-DD' });
+    const isRealDate = (value) => {
+      if (!value) return true;
+      const text = String(value);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+      const d = new Date(`${text}T00:00:00Z`);
+      return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === text;
+    };
+    if (!isRealDate(dateFrom) || !isRealDate(dateTo)) {
+      return res.status(400).json({ success: false, message: 'dateFrom and dateTo must be real dates (YYYY-MM-DD)' });
     }
     if (reportedBy && !isUuid(reportedBy)) {
       return res.status(400).json({ success: false, message: 'Invalid reportedBy id' });
@@ -90,7 +96,10 @@ exports.createItem = async (req, res, next) => {
     if (Number.isNaN(parsedDate.getTime())) {
       return res.status(400).json({ success: false, message: 'eventDate must be a valid date (YYYY-MM-DD)' });
     }
-    if (parsedDate > new Date()) {
+    // A date is sent as YYYY-MM-DD, which Postgres reads as UTC midnight.
+    // Allow one day of slack so "today" in IST (UTC+5:30) is never rejected.
+    const latestAllowed = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    if (parsedDate > latestAllowed) {
       return res.status(400).json({ success: false, message: 'Date cannot be in the future' });
     }
 
@@ -154,7 +163,7 @@ exports.updateItem = async (req, res, next) => {
       if (Number.isNaN(d.getTime())) {
         return res.status(400).json({ success: false, message: 'eventDate must be a valid date (YYYY-MM-DD)' });
       }
-      if (d > new Date()) {
+      if (d > new Date(Date.now() + 24 * 60 * 60 * 1000)) {
         return res.status(400).json({ success: false, message: 'Date cannot be in the future' });
       }
       updates.eventDate = d.toISOString().slice(0, 10);

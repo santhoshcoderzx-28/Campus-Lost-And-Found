@@ -135,6 +135,10 @@ exports.updateRequestStatus = async (req, res, next) => {
         `select status from app_v2.recovery_requests where id = $1 for update`,
         [row.id]
       );
+      if (locked.rows.length === 0) {
+        await client.query('rollback');
+        return res.status(404).json({ success: false, message: 'Request no longer exists' });
+      }
       if (locked.rows[0].status !== 'pending') {
         await client.query('rollback');
         return res.status(400).json({ success: false, message: `This request is already ${locked.rows[0].status}` });
