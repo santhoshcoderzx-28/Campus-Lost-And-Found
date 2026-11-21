@@ -89,7 +89,8 @@ export default function Browse() {
   const goToPage = (nextPage) => {
     setPage(nextPage);
     const next = {};
-    Object.entries(filters).forEach(([key, value]) => { if (value) next[key] = value; });
+    // use what was submitted, so paging never applies unsubmitted typing
+    Object.entries(applied || filters).forEach(([key, value]) => { if (value) next[key] = value; });
     if (nextPage > 1) next.page = String(nextPage);
     setParams(next);
   };

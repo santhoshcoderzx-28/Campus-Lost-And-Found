@@ -38,10 +38,12 @@ export default function ItemDetails() {
 
   useEffect(() => {
     if (!isOwner) return;
+    let alive = true;
     api
       .get(`/requests/item/${id}`)
-      .then((res) => { setRequests(res.data.requests); setRequestsError(''); })
-      .catch((err) => { if (err.status !== 401) setRequestsError(err.message); });
+      .then((res) => { if (!alive) return; setRequests(res.data.requests); setRequestsError(''); })
+      .catch((err) => { if (alive && err.status !== 401) setRequestsError(err.message); });
+    return () => { alive = false; };
   }, [id, isOwner]);
 
   const submitRequest = async (event) => {

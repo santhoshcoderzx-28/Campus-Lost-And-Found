@@ -12,14 +12,20 @@ export default function Toast() {
   const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
+    const timers = [];
     const listener = (toast) => {
       setToasts((current) => [...current, toast]);
-      setTimeout(() => {
-        setToasts((current) => current.filter((t) => t.id !== toast.id));
-      }, 3200);
+      timers.push(
+        setTimeout(() => {
+          setToasts((current) => current.filter((t) => t.id !== toast.id));
+        }, 3200)
+      );
     };
     listeners.push(listener);
-    return () => { listeners = listeners.filter((l) => l !== listener); };
+    return () => {
+      listeners = listeners.filter((l) => l !== listener);
+      timers.forEach(clearTimeout);
+    };
   }, []);
 
   return (

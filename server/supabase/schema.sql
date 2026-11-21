@@ -77,4 +77,4 @@ alter table app_v2.recovery_requests enable row level security;
 -- 6. STORAGE BUCKET FOR ITEM PHOTOS ----------------------------
 insert into storage.buckets (id, name, public)
 values ('item-images', 'item-images', true)
-on conflict (id) do nothing;
+on conflict (id) do update set public = true;

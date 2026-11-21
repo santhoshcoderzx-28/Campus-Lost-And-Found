@@ -63,6 +63,7 @@ export default function EditItem() {
     }
     setError('');
     setRemoveImage(false);
+    if (preview) URL.revokeObjectURL(preview);
     setFile(picked);
     setPreview(URL.createObjectURL(picked));
   };

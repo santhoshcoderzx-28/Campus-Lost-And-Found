@@ -250,7 +250,7 @@ export default function Admin() {
       {tab === 'requests' && requestPages > 1 && (
         <div className="pager">
           <button className="btn btn-sm btn-ghost" disabled={requestPage <= 1} onClick={() => setRequestPage(requestPage - 1)}>Previous</button>
-          <span className="small muted">Page {requestPage} of {requestPages}</span>
+          <span className="small muted">Page {safeRequestPage} of {requestPages}</span>
           <button className="btn btn-sm btn-ghost" disabled={requestPage >= requestPages} onClick={() => setRequestPage(requestPage + 1)}>Next</button>
         </div>
       )}
@@ -286,7 +286,7 @@ export default function Admin() {
       {tab === 'users' && userPages > 1 && (
         <div className="pager">
           <button className="btn btn-sm btn-ghost" disabled={userPage <= 1} onClick={() => setUserPage(userPage - 1)}>Previous</button>
-          <span className="small muted">Page {userPage} of {userPages}</span>
+          <span className="small muted">Page {safeUserPage} of {userPages}</span>
           <button className="btn btn-sm btn-ghost" disabled={userPage >= userPages} onClick={() => setUserPage(userPage + 1)}>Next</button>
         </div>
       )}

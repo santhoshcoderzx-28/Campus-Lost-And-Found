@@ -67,6 +67,7 @@ export default function ReportItem() {
       return;
     }
     setError('');
+    if (preview) URL.revokeObjectURL(preview);
     setFile(picked);
     setPreview(URL.createObjectURL(picked));
   };

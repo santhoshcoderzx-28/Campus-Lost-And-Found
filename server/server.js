@@ -78,6 +78,10 @@ const apiLimiter = rateLimit({
 });
 app.use('/api', apiLimiter);
 
+// say early whether photos can actually be served
+const { checkBucket } = require('./config/storage');
+checkBucket().catch(() => {});
+
 // routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/items', require('./routes/itemRoutes'));

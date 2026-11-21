@@ -53,4 +53,30 @@ async function destroyImage(publicId) {
   }
 }
 
-module.exports = { uploadImage, destroyImage, configured };
+// Uploads use the service key, which bypasses storage RLS, and getPublicUrl only
+// builds a string. So a private bucket accepts the upload and returns a URL that
+// the browser cannot fetch. Check once at boot and say it loudly.
+async function checkBucket() {
+  if (!client) return null;
+  try {
+    const { data, error } = await client.storage.getBucket(BUCKET);
+    if (error) {
+      console.error(`Storage bucket "${BUCKET}" is not readable: ${error.message}`);
+      return false;
+    }
+    if (!data || data.public !== true) {
+      console.error(
+        `WARNING: storage bucket "${BUCKET}" is PRIVATE. Photos will upload but never display.\n` +
+        `  Fix: update storage.buckets set public = true where id = '${BUCKET}';`
+      );
+      return false;
+    }
+    console.log(`Storage bucket "${BUCKET}" is public: photos will render.`);
+    return true;
+  } catch (error) {
+    console.error('Storage bucket check failed:', error.message);
+    return null;
+  }
+}
+
+module.exports = { uploadImage, destroyImage, checkBucket, configured };

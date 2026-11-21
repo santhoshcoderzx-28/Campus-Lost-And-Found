@@ -9,7 +9,15 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
 
+  // NavLink matches the pathname only, so /browse, ?type=lost and ?type=found
+  // would all be active together. Each browse link checks its own query.
   const linkClass = ({ isActive }) => `nav-link${isActive ? ' active' : ''}`;
+  const browseClass = (type) => () => {
+    if (pathname !== '/browse') return 'nav-link';
+    const current = new URLSearchParams(search).get('type');
+    if (type === null) return `nav-link${current ? '' : ' active'}`;
+    return `nav-link${current === type ? ' active' : ''}`;
+  };
 
   // /report?type=lost and /report?type=found share a pathname, so the active
   // state has to look at the query string as well.
@@ -32,9 +40,9 @@ export default function Navbar() {
 
         <nav id="primary-navigation" className={`nav-links${open ? ' open' : ''}`}>
           <NavLink to="/" end className={linkClass} onClick={() => setOpen(false)}>Home</NavLink>
-          <NavLink to="/browse" className={linkClass} onClick={() => setOpen(false)}>Browse Items</NavLink>
-          <NavLink to="/browse?type=lost" className={linkClass} onClick={() => setOpen(false)}>Lost</NavLink>
-          <NavLink to="/browse?type=found" className={linkClass} onClick={() => setOpen(false)}>Found</NavLink>
+          <NavLink to="/browse" className={browseClass(null)} onClick={() => setOpen(false)}>Browse Items</NavLink>
+          <NavLink to="/browse?type=lost" className={browseClass('lost')} onClick={() => setOpen(false)}>Lost</NavLink>
+          <NavLink to="/browse?type=found" className={browseClass('found')} onClick={() => setOpen(false)}>Found</NavLink>
           {user && (
             <>
               <NavLink to="/report?type=lost" className={reportClass('lost')} onClick={() => setOpen(false)}>Report Lost</NavLink>
