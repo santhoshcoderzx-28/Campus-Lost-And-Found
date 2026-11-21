@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Menu, X, LogOut, User, LayoutDashboard, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import ThemeToggle from './ThemeToggle.jsx';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -56,6 +57,7 @@ export default function Navbar() {
         </nav>
 
         <div className="nav-actions">
+          <ThemeToggle />
           {user ? (
             <>
               <Link to="/profile" className="nav-link" title="My profile">
