@@ -78,6 +78,9 @@ exports.logout = async (req, res) => {
 // PUT /api/auth/profile
 exports.updateProfile = async (req, res, next) => {
   try {
+    if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+      return res.status(400).json({ success: false, message: 'Send a JSON object with name and studentId' });
+    }
     const { name, studentId } = req.body;
     if (name !== undefined && (typeof name !== 'string' || name.trim().length < 2)) {
       return res.status(400).json({ success: false, message: 'Name must be at least 2 characters' });

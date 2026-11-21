@@ -9,12 +9,19 @@ const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_KEY;
 const configured = Boolean(url && key);
 
-const client = configured
-  ? createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
-  : null;
+let client = null;
+if (configured) {
+  try {
+    client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  } catch (error) {
+    // a typo in SUPABASE_URL must degrade to a 503, not crash the whole API
+    console.error(`Photo storage is misconfigured: ${error.message}`);
+    client = null;
+  }
+}
 
 async function uploadImage(file) {
-  if (!configured) {
+  if (!configured || !client) {
     const error = new Error('Photo storage is not configured on the server');
     error.status = 503;
     throw error;

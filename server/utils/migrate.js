@@ -23,6 +23,7 @@ const run = async () => {
   const failures = [];
   for (const statement of statements) {
     const label = statement.replace(/\s+/g, ' ').slice(0, 60);
+    const isStorageStatement = /storage\.buckets/i.test(statement);
     try {
       await query(statement);
       okCount += 1;
@@ -30,7 +31,7 @@ const run = async () => {
     } catch (error) {
       // The storage bucket row only exists on Supabase; anything else failing
       // is a real migration failure and must not look like success.
-      if (label.includes('storage.buckets')) {
+      if (isStorageStatement) {
         console.log(`  SKIP  ${label} -> ${error.message} (storage row only)`);
       } else {
         failures.push(`${label} -> ${error.message}`);
