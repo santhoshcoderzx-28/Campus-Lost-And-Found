@@ -53,7 +53,7 @@ export default function Register() {
           </div>
           <div className="field">
             <label htmlFor="email">University email</label>
-            <input id="email" type="email" className="input" value={form.email} onChange={change('email')} />
+            <input id="email" type="email" className="input" value={form.email} onChange={change('email')} autoComplete="email" />
           </div>
           <div className="field">
             <label htmlFor="studentId">Student ID <span className="hint">(optional)</span></label>

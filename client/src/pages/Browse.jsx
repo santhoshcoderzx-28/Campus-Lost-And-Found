@@ -52,7 +52,10 @@ export default function Browse() {
   const [applied, setApplied] = useState(null);
   // keyed on the serialised filters, not the object identity, so a new but
   // equal `applied` object does not trigger a second identical request
-  const queryKey = JSON.stringify({ ...(applied || filters), page, limit: 9 });
+  const queryKey = JSON.stringify(
+    { ...(applied || filters), page, limit: 9 },
+    Object.keys({ ...(applied || filters), page, limit: 9 }).sort()
+  );
   const query = useMemo(() => JSON.parse(queryKey), [queryKey]);
 
   useEffect(() => {
@@ -100,7 +103,7 @@ export default function Browse() {
 
   // a stale ?page=9 must not show "Page 9 of 2" with an empty grid
   useEffect(() => {
-    if (data.pages && page > data.pages) goToPage(data.pages);
+    if (!loading && data.pages && page > data.pages) goToPage(data.pages);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.pages]);
 

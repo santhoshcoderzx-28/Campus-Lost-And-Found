@@ -81,6 +81,9 @@ export default function ReportItem() {
     setBusy(true);
     try {
       const res = await api.post('/items', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      if (!res.data || !res.data.item || !res.data.item._id) {
+        throw new Error('The report was saved but the server sent an incomplete response. Please open your dashboard.');
+      }
       const found = res.data.possibleMatches || [];
       if (found.length) {
         setMatches({ item: res.data.item, list: found });
