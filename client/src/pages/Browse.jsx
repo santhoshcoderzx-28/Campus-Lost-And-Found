@@ -50,11 +50,12 @@ export default function Browse() {
   // `filters` is what the user is typing; `applied` is what has been submitted,
   // so typing does not fire a request per keystroke.
   const [applied, setApplied] = useState(null);
+  const [tick, setTick] = useState(0);
   // keyed on the serialised filters, not the object identity, so a new but
   // equal `applied` object does not trigger a second identical request
   const queryKey = JSON.stringify(
-    { ...(applied || filters), page, limit: 9 },
-    Object.keys({ ...(applied || filters), page, limit: 9 }).sort()
+    { ...(applied || filters), page, limit: 9, tick },
+    [...Object.keys({ ...(applied || filters), page, limit: 9 }), 'tick'].sort()
   );
   const query = useMemo(() => JSON.parse(queryKey), [queryKey]);
 
@@ -80,6 +81,8 @@ export default function Browse() {
     Object.entries(filters).forEach(([key, value]) => { if (value) next[key] = value; });
     setApplied({ ...filters });
     setParams(next);
+    // pressing Search again with unchanged filters should still refresh
+    setTick((value) => value + 1);
   };
 
   // keep the page number in the URL so a refresh or a shared link keeps it

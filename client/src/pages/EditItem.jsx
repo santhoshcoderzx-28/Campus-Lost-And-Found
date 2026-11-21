@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client.js';
+import { showToast } from '../components/Toast.jsx';
 import Loader from '../components/Loader.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -94,6 +95,7 @@ export default function EditItem() {
       } else {
         await api.put(`/items/${id}`, payload);
       }
+      showToast('Changes saved');
       navigate(`/items/${id}`);
     } catch (err) {
       setError(err.message);

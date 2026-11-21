@@ -45,24 +45,24 @@ export default function Dashboard() {
   useEffect(() => { load(); }, []);
 
   const review = async (id, status) => {
-    if (busyId) return;
+    if (busyId === id) return;
     setBusyId(id);
     try {
       await api.put(`/requests/${id}/status`, { status });
       showToast(status === 'approved' ? 'Request approved' : 'Request rejected');
       await load();
-    } catch (err) { setError(err.message); } finally { setBusyId(''); }
+    } catch (err) { setError(err.message); showToast(err.message, 'error'); } finally { setBusyId(''); }
   };
 
   const removeReport = async (id) => {
-    if (busyId) return;
+    if (busyId === id) return;
     if (!window.confirm('Delete this report permanently?')) return;
     setBusyId(id);
     try {
       await api.delete(`/items/${id}`);
       showToast('Report deleted');
       await load();
-    } catch (err) { setError(err.message); } finally { setBusyId(''); }
+    } catch (err) { setError(err.message); showToast(err.message, 'error'); } finally { setBusyId(''); }
   };
 
   return (

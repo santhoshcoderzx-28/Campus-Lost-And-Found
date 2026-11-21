@@ -19,6 +19,7 @@ export default function ItemDetails() {
   const [feedback, setFeedback] = useState('');
   const [requests, setRequests] = useState([]);
   const [requestsError, setRequestsError] = useState('');
+  const [requestSent, setRequestSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [busyRequestId, setBusyRequestId] = useState('');
 
@@ -53,7 +54,9 @@ export default function ItemDetails() {
     setBusy(true);
     try {
       await api.post('/requests', { itemId: id, message });
+      setRequestSent(true);
       setFeedback('Request submitted. The person who reported this item will review it.');
+      showToast('Request submitted');
       setMessage('');
     } catch (err) {
       setFeedback(err.message);
@@ -63,7 +66,7 @@ export default function ItemDetails() {
   };
 
   const review = async (requestId, status) => {
-    if (busyRequestId) return;
+    if (busyRequestId === requestId) return;
     setBusyRequestId(requestId);
     try {
       await api.put(`/requests/${requestId}/status`, { status });
@@ -74,7 +77,10 @@ export default function ItemDetails() {
       setItem(refreshed.data.item);
     } catch (err) {
       // a 401 is a dead session, already handled by the interceptor
-      if (err.status !== 401) setFeedback(err.message);
+      if (err.status !== 401) {
+        setFeedback(err.message);
+        showToast(err.message, 'error');
+      }
     } finally {
       setBusyRequestId('');
     }
@@ -161,7 +167,12 @@ export default function ItemDetails() {
               <p className="small muted mb-2">
                 Explain why the item belongs to you. Only the person who reported it can see your request.
               </p>
-              {user ? (
+              {requestSent ? (
+                <div className="alert alert-success" role="status">
+                  Your request has been sent. The person who reported this item will review it and
+                  you will see the outcome in your dashboard.
+                </div>
+              ) : user ? (
                 <form onSubmit={submitRequest}>
                   <div className="field">
                     <label htmlFor="message">Why is this yours?</label>

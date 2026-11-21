@@ -60,7 +60,7 @@ export default function Admin() {
       await api.put(`/admin/items/${id}/status`, { status });
       showToast(`Status changed to ${status}`);
       await load(true);
-    } catch (err) { setError(err.message); } finally { setBusyId(''); }
+    } catch (err) { setError(err.message); showToast(err.message, 'error'); } finally { setBusyId(''); }
   };
 
   const removeItem = async (id) => {
@@ -71,7 +71,7 @@ export default function Admin() {
       await api.delete(`/admin/items/${id}`);
       showToast('Report removed');
       await load(true);
-    } catch (err) { setError(err.message); } finally { setBusyId(''); }
+    } catch (err) { setError(err.message); showToast(err.message, 'error'); } finally { setBusyId(''); }
   };
 
   const reviewRequest = async (id, status) => {
@@ -83,6 +83,7 @@ export default function Admin() {
       await load(true);
     } catch (err) {
       setError(err.message);
+      showToast(err.message, 'error');
     } finally {
       setBusyId('');
     }
@@ -97,7 +98,7 @@ export default function Admin() {
       await api.put(`/admin/users/${id}/status`, { accountStatus });
       showToast(accountStatus === 'suspended' ? 'Account suspended' : 'Account reactivated');
       await load(true);
-    } catch (err) { setError(err.message); } finally { setBusyId(''); }
+    } catch (err) { setError(err.message); showToast(err.message, 'error'); } finally { setBusyId(''); }
   };
 
   // the API returns the full admin lists, so paging them here keeps the tables readable

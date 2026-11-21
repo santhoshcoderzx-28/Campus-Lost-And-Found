@@ -31,13 +31,26 @@ export default function ReportItem() {
   const [matches, setMatches] = useState(null);
   const boxRef = useRef(null);
   const fileRef = useRef(null);
+  const errorRef = useRef(null);
+
+  // bring the message into view: the button is far below the banner
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [error]);
 
   // the navbar links change ?type= without remounting this page
   useEffect(() => {
     const fromUrl = params.get('type');
-    if (fromUrl === 'lost' || fromUrl === 'found') {
-      setForm((current) => ({ ...current, type: fromUrl }));
-    }
+    if (fromUrl !== 'lost' && fromUrl !== 'found') return;
+    // only follow the URL while the form is still untouched, so a click in the
+    // navbar cannot silently rewrite a report the user has already filled in
+    setForm((current) =>
+      current.title || current.description || current.location
+        ? current
+        : { ...current, type: fromUrl }
+    );
   }, [params]);
 
   const change = (key) => (event) => setForm({ ...form, [key]: event.target.value });
@@ -128,7 +141,9 @@ export default function ReportItem() {
       <h1 className="h2">Report a {form.type} item</h1>
       <p className="lead mb-3">Give as much detail as you can - it is what helps the item find its owner.</p>
 
-      {error && <div className="alert alert-error">{error}</div>}
+      {error && (
+        <div className="alert alert-error" role="alert" ref={errorRef}>{error}</div>
+      )}
 
       <form className="card card-pad" onSubmit={submit} noValidate>
         <div className="form-row">

@@ -39,10 +39,14 @@ export function AuthProvider({ children }) {
         setUser(res.data.user);
         localStorage.setItem('clf_user', JSON.stringify(res.data.user));
       })
-      .catch(() => {
-        localStorage.removeItem('clf_token');
-        localStorage.removeItem('clf_user');
-        setUser(null);
+      .catch((err) => {
+        // Only a rejected token means the session is over. A network blip or a
+        // 500 must not throw the user out without a word.
+        if (err && (err.status === 401 || err.status === 403)) {
+          localStorage.removeItem('clf_token');
+          localStorage.removeItem('clf_user');
+          setUser(null);
+        }
       })
       .finally(() => setInitialising(false));
   }, []);
