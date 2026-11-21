@@ -25,11 +25,21 @@ const registerLimiter = rateLimit({
   message: { success: false, message: 'Too many accounts created from this network, please try later' },
 });
 
+// a signed-in attacker must not be able to brute-force the current password
+const passwordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many password attempts, please try again later' },
+});
+
 router.post('/register', registerLimiter, controller.register);
 router.post('/login', loginLimiter, controller.login);
 router.get('/me', protect, controller.me);
 router.post('/logout', protect, controller.logout);
 router.put('/profile', protect, controller.updateProfile);
-router.put('/password', protect, controller.changePassword);
+router.put('/password', protect, passwordLimiter, controller.changePassword);
 
 module.exports = router;

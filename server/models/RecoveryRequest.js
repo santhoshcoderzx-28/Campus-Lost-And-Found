@@ -103,9 +103,13 @@ async function countPending() {
   return rows[0].total;
 }
 
-async function all() {
-  const { rows } = await query(`${SELECT} order by r.created_at desc`);
-  return rows;
+async function all({ page = 1, limit = 200 } = {}) {
+  const offset = (page - 1) * limit;
+  const [countRes, pageRes] = await Promise.all([
+    query('select count(*)::int as total from app_v2.recovery_requests'),
+    query(`${SELECT} order by r.created_at desc limit $1 offset $2`, [limit, offset]),
+  ]);
+  return { total: countRes.rows[0].total, requests: pageRes.rows };
 }
 
 module.exports = {

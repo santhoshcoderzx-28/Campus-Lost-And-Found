@@ -27,7 +27,7 @@ Import `Campus_Lost_Found_v2.postman_collection.json`, start the API, run the co
 | 16 | Get one item | 200 |
 | 17 | Malformed id | 400 |
 | 18 | Update item (run with the admin token, because status is admin-only) | 200, status saved |
-| 19 | Invalid status | 400 |
+| 19 | Invalid status (run with the admin token too) | 400 |
 | 20 | My reports | 200 |
 | 21 | Submit request | 201 |
 | 22 | Duplicate request | 400 |
@@ -85,8 +85,8 @@ Import `Campus_Lost_Found_v2.postman_collection.json`, start the API, run the co
 | Width | Expected |
 |---|---|
 | 1440 px | Three-column item grid, six-column filter bar |
-| 1024 px | Single-column item grid (the 2-column rule applies at 980 px and below), filters wrap |
-| 768 px | Single-column cards; the hamburger menu appears at 900 px and below |
+| 1024 px | Three-column item grid and the full filter bar (the layout only changes at 980 px and below) |
+| 768 px | Two-column item grid, filters in two columns; the hamburger menu appears at 900 px and below |
 | 390 px (mobile) | No horizontal scroll, touch-friendly buttons, forms full width |
 
 ## D. Security checks

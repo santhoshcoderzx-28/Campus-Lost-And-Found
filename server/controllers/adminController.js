@@ -65,8 +65,17 @@ exports.listItems = async (req, res, next) => {
 // GET /api/admin/requests
 exports.listRequests = async (req, res, next) => {
   try {
-    const rows = await RecoveryRequest.all();
-    res.json({ success: true, count: rows.length, requests: rows.map(RecoveryRequest.toApi) });
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 200));
+    const { total, requests } = await RecoveryRequest.all({ page, limit });
+    res.json({
+      success: true,
+      count: requests.length,
+      total,
+      page,
+      pages: Math.ceil(total / limit) || 1,
+      requests: requests.map(RecoveryRequest.toApi),
+    });
   } catch (error) {
     next(error);
   }

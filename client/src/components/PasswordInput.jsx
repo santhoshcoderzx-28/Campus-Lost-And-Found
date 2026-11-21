@@ -22,6 +22,7 @@ export default function PasswordInput({
         <button
           type="button"
           className="password-toggle"
+          onMouseDown={(event) => event.preventDefault()}
           onClick={() => setVisible((v) => !v)}
           aria-label={visible ? 'Hide password' : 'Show password'}
           title={visible ? 'Hide password' : 'Show password'}

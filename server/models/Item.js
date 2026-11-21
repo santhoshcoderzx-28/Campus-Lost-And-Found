@@ -92,16 +92,28 @@ async function list({ filters, page = 1, limit = 9, sort = 'newest' }) {
   const { where, values } = buildFilter(filters || {});
   const direction = sort === 'oldest' ? 'asc' : 'desc';
 
-  const countRes = await query(`select count(*)::int as total from app_v2.items i ${where}`, values);
-  const total = countRes.rows[0].total;
-
-  const rows = await query(
-    `${SELECT} ${where} order by i.event_date ${direction}, i.created_at ${direction}, i.id ${direction}
+  // count(*) over () returns the filtered total on the same rows as the page, so
+  // browsing costs one round trip and the total cannot disagree with the grid.
+  const pageRes = await query(
+    `select i.*, u.name as reporter_name, u.student_id as reporter_student_id,
+            count(*) over () as total_count
+     from app_v2.items i
+     join app_v2.users u on u.id = i.reported_by
+     ${where}
+     order by i.event_date ${direction}, i.created_at ${direction}, i.id ${direction}
      limit $${values.length + 1} offset $${values.length + 2}`,
     [...values, limit, (page - 1) * limit]
   );
 
-  return { total, items: rows.rows };
+  // An offset past the last row returns nothing, so only that path re-counts.
+  let total = pageRes.rows.length ? Number(pageRes.rows[0].total_count) : null;
+  if (total === null) {
+    const countRes = await query(`select count(*)::int as total from app_v2.items i ${where}`, values);
+    total = countRes.rows[0].total;
+  }
+
+  const items = pageRes.rows.map(({ total_count, ...row }) => row);
+  return { total, items };
 }
 
 async function findById(id) {

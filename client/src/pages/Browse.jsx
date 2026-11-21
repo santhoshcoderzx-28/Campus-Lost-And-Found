@@ -50,7 +50,10 @@ export default function Browse() {
   // `filters` is what the user is typing; `applied` is what has been submitted,
   // so typing does not fire a request per keystroke.
   const [applied, setApplied] = useState(null);
-  const query = useMemo(() => ({ ...(applied || filters), page, limit: 9 }), [applied, page]);
+  // keyed on the serialised filters, not the object identity, so a new but
+  // equal `applied` object does not trigger a second identical request
+  const queryKey = JSON.stringify({ ...(applied || filters), page, limit: 9 });
+  const query = useMemo(() => JSON.parse(queryKey), [queryKey]);
 
   useEffect(() => {
     let alive = true;

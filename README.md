@@ -178,6 +178,7 @@ Two terminals are needed: the API on 5000 and Vite on 5173.
 | Variable | Used by | Notes |
 |---|---|---|
 | `PORT` | `server.js` | 5000 locally, provided by Render in production |
+| `NODE_ENV` | `server.js`, `config/database.js` | `production` on Render; makes a missing `DATABASE_URL` or `JWT_SECRET` a hard boot failure |
 | `DATABASE_URL` | `config/database.js` | Supabase **Session pooler** string (port 5432) |
 | `PGSSL` | `config/database.js` | `require` for Supabase; `disable` for a local Postgres |
 | `SUPABASE_URL` | `config/storage.js` | `https://<project-ref>.supabase.co` |
@@ -216,8 +217,20 @@ cd server && npm run migrate
 Without that step every endpoint returns 500 (`relation "app_v2.users" does not exist`) while
 `/api/health` still reports 200.
 
+The deployed database also needs its accounts and sample data. Run the seed once, locally, with the
+production `DATABASE_URL` and the passwords you want:
+
+```bash
+cd server
+# .env must contain DATABASE_URL, ADMIN_PASSWORD (>= 8 chars), DEMO_PASSWORD (>= 6 chars)
+npm run seed
+```
+
+The seed **wipes `app_v2` first**, so run it once, before real users exist.
+
 The same service then serves the app at `/` and the API at `/api/*`. Because both share an origin,
-no CORS configuration is needed for production traffic.
+browsers make no cross-origin request, so `CLIENT_URL` is only needed if you call the API from
+another host (the server logs a warning when it is unset in production).
 
 ---
 
@@ -226,6 +239,10 @@ no CORS configuration is needed for production traffic.
 `server/postman/Campus_Lost_Found_v2.postman_collection.json` — **30 requests, 40 assertions**,
 covering happy paths and the 400 / 401 / 403 / 404 cases. Run it in order: requests 05 and 07 store
 the student and admin tokens, 13 stores `itemId`, 21 stores `requestId`.
+
+Set the collection variables `demoPassword` and `adminPassword` to the values you used in
+`server/.env` before running it; no password is stored in the collection. Request 02 registers a
+fixed email, so on a second run delete that account or change the address.
 
 `TESTING.md` holds the manual checklist: 30 API checks, 35 frontend checks, 4 responsive widths and
 7 security checks.
@@ -285,3 +302,8 @@ TESTING.md                     manual test checklist
 - `GET /api/admin/requests` returns every request; the admin table pages in the browser.
 - Search uses `ILIKE`; at tens of thousands of rows this should move to the GIN index.
 - The seeded admin password must be changed after the first deployment.
+- Logout is stateless: the JWT stays valid until it expires (7 days). Password change does not
+  revoke existing tokens; suspending the account does block every later request.
+- The `item-images` bucket is public, so a stored photo URL is readable by anyone who has it. A
+  real deployment would keep the bucket private and serve signed URLs.
+- The Supabase service key is a project master key; it must stay server side only (it bypasses RLS).

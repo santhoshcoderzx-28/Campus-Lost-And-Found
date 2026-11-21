@@ -11,6 +11,9 @@ const errorHandler = (err, req, res, next) => {
   if (['23514', '23502', '22P02', '22007', '22008'].includes(err.code)) {
     return res.status(400).json({ success: false, message: 'A field value is invalid' });
   }
+  if (err.code === '57014') {
+    return res.status(503).json({ success: false, message: 'That request took too long. Please try again.' });
+  }
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ success: false, message: 'Image must be smaller than 3 MB' });
   }

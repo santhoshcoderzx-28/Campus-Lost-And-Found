@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "c1f0a9b3-1a2b-4c3d-8e4f-clfv2-0001",
     "name": "Campus Lost & Found API (v2 - Supabase)",
-    "description": "30 requests with assertions for the Campus Lost and Found Management System (Express + Supabase PostgreSQL).\n\nBefore running: apply server/supabase/schema.sql (npm run migrate), fill server/.env, run npm run seed, then npm run dev.\n\nRun in order 01 -> 30. Requests 05 and 07 store the student and admin tokens, 13 stores itemId and 21 stores requestId.",
+    "description": "30 requests with assertions for the Campus Lost and Found Management System (Express + Supabase PostgreSQL).\n\nBefore running: apply server/supabase/schema.sql (npm run migrate), fill server/.env, run npm run seed, then npm run dev.\n\nRun in order 01 -> 30. Requests 05 and 07 store the student and admin tokens, 13 stores itemId and 21 stores requestId.\n\nSet the collection variables demoPassword and adminPassword to the passwords you used in server/.env (ADMIN_PASSWORD / DEMO_PASSWORD) before running. No password is shipped in this file.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -188,7 +188,7 @@
         "description": "",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"demo@saiuniversity.edu.in\",\n  \"password\": \"demo123\"\n}",
+          "raw": "{\n  \"email\": \"demo@saiuniversity.edu.in\",\n  \"password\": \"{{demoPassword}}\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -275,7 +275,7 @@
         "description": "",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"admin@saiuniversity.edu.in\",\n  \"password\": \"admin123\"\n}",
+          "raw": "{\n  \"email\": \"admin@saiuniversity.edu.in\",\n  \"password\": \"{{adminPassword}}\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1199,6 +1199,14 @@
     },
     {
       "key": "requestId",
+      "value": ""
+    },
+    {
+      "key": "demoPassword",
+      "value": ""
+    },
+    {
+      "key": "adminPassword",
       "value": ""
     }
   ]

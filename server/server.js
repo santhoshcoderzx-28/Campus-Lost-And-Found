@@ -12,6 +12,11 @@ const mongoSanitizeLike = require('express-mongo-sanitize');
 const { testConnection } = require('./config/database');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 16) {
+  console.error('JWT_SECRET is missing or too short. Set a long random value.');
+  if (process.env.NODE_ENV === 'production') process.exit(1);
+}
+
 const app = express();
 
 // Render (and any reverse proxy) terminates TLS, so trust one hop for req.ip
@@ -52,7 +57,15 @@ app.use(
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(mongoSanitizeLike()); // strips $ and . operators from request input
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+// Log the path only: ?q= can contain a student's name or phone number
+morgan.token('safe-url', (req) => req.originalUrl.split('?')[0]);
+app.use(
+  morgan(
+    process.env.NODE_ENV === 'production'
+      ? ':remote-addr - :remote-user [:date[clf]] ":method :safe-url HTTP/:http-version" :status :res[content-length]'
+      : ':method :safe-url :status :response-time ms'
+  )
+);
 
 // A generous global limit: one campus NAT can share a single IP, so this only
 // stops runaway loops, while the auth routes keep their own tighter limiters.

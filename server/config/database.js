@@ -18,6 +18,9 @@ const pool = new Pool({
   keepAlive: true,
   keepAliveInitialDelayMillis: 10000,
   allowExitOnIdle: true,
+  // Server-side caps: with max 5, one lock wait would otherwise pin a connection
+  statement_timeout: 8000,
+  lock_timeout: 3000,
 });
 
 pool.on('error', (err) => console.error('Unexpected database error:', err.message));
