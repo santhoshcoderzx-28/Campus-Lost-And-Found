@@ -15,6 +15,7 @@ export default function EditItem() {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState('');
   const [currentImage, setCurrentImage] = useState('');
+  const [removeImage, setRemoveImage] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -60,8 +61,16 @@ export default function EditItem() {
       return;
     }
     setError('');
+    setRemoveImage(false);
     setFile(picked);
     setPreview(URL.createObjectURL(picked));
+  };
+
+  const clearPhoto = () => {
+    setFile(null);
+    setPreview('');
+    setCurrentImage('');
+    setRemoveImage(true);
   };
 
   const submit = async (event) => {
@@ -74,6 +83,7 @@ export default function EditItem() {
     try {
       const payload = { ...form };
       if (!(user && user.role === 'admin')) delete payload.status;
+      if (removeImage) payload.removeImage = 'true';
 
       if (file) {
         // multipart so the new photo travels with the text fields
@@ -164,7 +174,12 @@ export default function EditItem() {
           {preview ? (
             <img src={preview} alt="New photo preview" style={{ marginTop: 10, maxHeight: 200, borderRadius: 10, border: '1px solid var(--line)' }} />
           ) : currentImage ? (
-            <img src={currentImage} alt="Current photo" style={{ marginTop: 10, maxHeight: 200, borderRadius: 10, border: '1px solid var(--line)' }} />
+            <>
+              <img src={currentImage} alt="Current photo" style={{ marginTop: 10, maxHeight: 200, borderRadius: 10, border: '1px solid var(--line)' }} />
+              <button type="button" className="btn btn-sm btn-ghost mt-1" onClick={clearPhoto}>
+                Remove photo
+              </button>
+            </>
           ) : null}
         </div>
 

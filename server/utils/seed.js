@@ -56,8 +56,8 @@ const run = async () => {
     }
 
     console.log(`${items.length} sample items created`);
-    console.log(`Admin: ${admin.email} / ${process.env.ADMIN_PASSWORD || 'admin123'}`);
-    console.log(`Student: ${demo.email} / ${process.env.DEMO_PASSWORD || 'demo123'}`);
+    console.log(`Admin account: ${admin.email} (password from ADMIN_PASSWORD in .env)`);
+    console.log(`Student account: ${demo.email} (password from DEMO_PASSWORD in .env)`);
   } catch (error) {
     console.error('Seed failed:', error.message);
     process.exitCode = 1;

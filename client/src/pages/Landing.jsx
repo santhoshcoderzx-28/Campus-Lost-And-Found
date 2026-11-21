@@ -61,7 +61,10 @@ export default function Landing() {
 
       {loadError && (
         <div className="container mt-2">
-          <div className="alert alert-error">{loadError}</div>
+          <div className="alert alert-error">
+            {loadError}{' '}
+            <button className="btn btn-sm btn-ghost" onClick={() => window.location.reload()}>Retry</button>
+          </div>
         </div>
       )}
 

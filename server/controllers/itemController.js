@@ -166,6 +166,14 @@ exports.updateItem = async (req, res, next) => {
     // A replacement photo: upload the new one first, then drop the old object
     // only after the row has been updated successfully.
     let replacedPublicId = '';
+
+    // explicit removal: the owner clears the photo without uploading a new one
+    if (!req.file && (req.body.removeImage === 'true' || req.body.removeImage === true)) {
+      updates.imageUrl = '';
+      updates.imagePublicId = '';
+      replacedPublicId = existing.image_public_id || '';
+    }
+
     if (req.file) {
       const uploaded = await uploadImage(req.file);
       updates.imageUrl = uploaded.url;

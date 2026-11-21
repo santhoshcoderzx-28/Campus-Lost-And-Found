@@ -18,6 +18,8 @@ export default function Admin() {
   const [requests, setRequests] = useState([]);
   const [itemPage, setItemPage] = useState(1);
   const [itemPages, setItemPages] = useState(1);
+  const [requestPage, setRequestPage] = useState(1);
+  const [userPage, setUserPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState('');
@@ -97,6 +99,13 @@ export default function Admin() {
       await load(true);
     } catch (err) { setError(err.message); } finally { setBusyId(''); }
   };
+
+  // the API returns the full admin lists, so paging them here keeps the tables readable
+  const PER_PAGE = 20;
+  const requestPages = Math.max(1, Math.ceil(requests.length / PER_PAGE));
+  const visibleRequests = requests.slice((requestPage - 1) * PER_PAGE, requestPage * PER_PAGE);
+  const userPages = Math.max(1, Math.ceil(users.length / PER_PAGE));
+  const visibleUsers = users.slice((userPage - 1) * PER_PAGE, userPage * PER_PAGE);
 
   if (loading) return <Loader />;
 
@@ -205,7 +214,7 @@ export default function Admin() {
           <table>
             <thead><tr><th>Item</th><th>Requester</th><th>Message</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
             <tbody>
-              {requests.map((r) => (
+              {visibleRequests.map((r) => (
                 <tr key={r._id}>
                   <td><Link to={`/items/${r.item._id}`} style={{ fontWeight: 600 }}>{r.item.title}</Link></td>
                   <td className="small">{r.requester.name}<br /><span className="muted">{r.requester.email}</span></td>
@@ -229,12 +238,20 @@ export default function Admin() {
         </div>
       )}
 
+      {tab === 'requests' && requestPages > 1 && (
+        <div className="pager">
+          <button className="btn btn-sm btn-ghost" disabled={requestPage <= 1} onClick={() => setRequestPage(requestPage - 1)}>Previous</button>
+          <span className="small muted">Page {requestPage} of {requestPages}</span>
+          <button className="btn btn-sm btn-ghost" disabled={requestPage >= requestPages} onClick={() => setRequestPage(requestPage + 1)}>Next</button>
+        </div>
+      )}
+
       {tab === 'users' && (
         <div className="table-wrap">
           <table>
             <thead><tr><th>Name</th><th>Email</th><th>Student ID</th><th>Role</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>
-              {users.map((u) => (
+              {visibleUsers.map((u) => (
                 <tr key={u._id}>
                   <td style={{ fontWeight: 600 }}>{u.name}</td>
                   <td className="small">{u.email}</td>
@@ -254,6 +271,14 @@ export default function Admin() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {tab === 'users' && userPages > 1 && (
+        <div className="pager">
+          <button className="btn btn-sm btn-ghost" disabled={userPage <= 1} onClick={() => setUserPage(userPage - 1)}>Previous</button>
+          <span className="small muted">Page {userPage} of {userPages}</span>
+          <button className="btn btn-sm btn-ghost" disabled={userPage >= userPages} onClick={() => setUserPage(userPage + 1)}>Next</button>
         </div>
       )}
     </div>
