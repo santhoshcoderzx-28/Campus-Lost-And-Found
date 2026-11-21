@@ -41,6 +41,7 @@ export default function Footer() {
         <div className="footer-bottom">
           <span>&copy; {new Date().getFullYear()} Campus Lost &amp; Found Management System</span>
           <span>Academic project - Web Technology and Internet Programming</span>
+          <span title="Build stamp: use this to confirm which version is deployed">v2.1</span>
         </div>
       </div>
     </footer>
