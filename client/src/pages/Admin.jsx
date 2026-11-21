@@ -54,7 +54,7 @@ export default function Admin() {
   }, [itemPage]);
 
   const setItemStatus = async (id, status) => {
-    if (busyId) return;
+    if (busyId === id) return;
     setBusyId(id);
     try {
       await api.put(`/admin/items/${id}/status`, { status });
@@ -64,7 +64,7 @@ export default function Admin() {
   };
 
   const removeItem = async (id) => {
-    if (busyId) return;
+    if (busyId === id) return;
     if (!window.confirm('Remove this report? Its requests and photo are deleted too.')) return;
     setBusyId(id);
     try {
@@ -75,7 +75,7 @@ export default function Admin() {
   };
 
   const reviewRequest = async (id, status) => {
-    if (busyId) return;
+    if (busyId === id) return;
     setBusyId(id);
     try {
       await api.put(`/requests/${id}/status`, { status });
@@ -89,7 +89,7 @@ export default function Admin() {
   };
 
   const setUserStatus = async (id, accountStatus) => {
-    if (busyId) return;
+    if (busyId === id) return;
     const verb = accountStatus === 'suspended' ? 'Suspend' : 'Reactivate';
     if (!window.confirm(`${verb} this account?`)) return;
     setBusyId(id);
@@ -103,9 +103,11 @@ export default function Admin() {
   // the API returns the full admin lists, so paging them here keeps the tables readable
   const PER_PAGE = 20;
   const requestPages = Math.max(1, Math.ceil(requests.length / PER_PAGE));
-  const visibleRequests = requests.slice((requestPage - 1) * PER_PAGE, requestPage * PER_PAGE);
+  const safeRequestPage = Math.min(requestPage, requestPages);
+  const visibleRequests = requests.slice((safeRequestPage - 1) * PER_PAGE, safeRequestPage * PER_PAGE);
   const userPages = Math.max(1, Math.ceil(users.length / PER_PAGE));
-  const visibleUsers = users.slice((userPage - 1) * PER_PAGE, userPage * PER_PAGE);
+  const safeUserPage = Math.min(userPage, userPages);
+  const visibleUsers = users.slice((safeUserPage - 1) * PER_PAGE, safeUserPage * PER_PAGE);
 
   if (loading) return <Loader />;
 
@@ -170,7 +172,13 @@ export default function Admin() {
       )}
 
       {tab === 'items' && items.length === 0 && (
-        <EmptyState title="No reports yet" text="Nothing has been reported on campus yet." />
+        <EmptyState
+          title={itemPage > 1 ? 'No reports on this page' : 'No reports yet'}
+          text={itemPage > 1 ? 'Go back to the previous page to see the remaining reports.' : 'Nothing has been reported on campus yet.'}
+          action={itemPage > 1 ? (
+            <button className="btn btn-sm" onClick={() => setItemPage(itemPage - 1)}>Previous page</button>
+          ) : null}
+        />
       )}
 
       {tab === 'items' && items.length > 0 && (

@@ -18,6 +18,7 @@ export default function ItemDetails() {
   const [message, setMessage] = useState('');
   const [feedback, setFeedback] = useState('');
   const [requests, setRequests] = useState([]);
+  const [requestsError, setRequestsError] = useState('');
   const [busy, setBusy] = useState(false);
   const [busyRequestId, setBusyRequestId] = useState('');
 
@@ -36,7 +37,10 @@ export default function ItemDetails() {
 
   useEffect(() => {
     if (!isOwner) return;
-    api.get(`/requests/item/${id}`).then((res) => setRequests(res.data.requests)).catch(() => {});
+    api
+      .get(`/requests/item/${id}`)
+      .then((res) => { setRequests(res.data.requests); setRequestsError(''); })
+      .catch((err) => { if (err.status !== 401) setRequestsError(err.message); });
   }, [id, isOwner]);
 
   const submitRequest = async (event) => {
@@ -78,7 +82,14 @@ export default function ItemDetails() {
 
   if (loading) return <Loader />;
   if (error) return <div className="container section"><div className="alert alert-error">{error}</div></div>;
-  if (!item) return null;
+  if (!item) {
+    return (
+      <div className="container section">
+        <div className="alert alert-error">This report could not be loaded. It may have been removed.</div>
+        <Link to="/browse" className="btn btn-sm">Back to browse</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="container section">
@@ -123,7 +134,8 @@ export default function ItemDetails() {
                 <Link to={`/items/${item._id}/edit`} className="btn btn-sm btn-ghost">Edit report</Link>
               </div>
               <p className="small muted mb-2">Review each request and approve the right one.</p>
-              {requests.length === 0 && <p className="small muted">No requests yet.</p>}
+              {requestsError && <div className="alert alert-error">{requestsError}</div>}
+              {!requestsError && requests.length === 0 && <p className="small muted">No requests yet.</p>}
               {requests.map((r) => (
                 <div key={r._id} className="card card-pad mb-2">
                   <div className="row-between">

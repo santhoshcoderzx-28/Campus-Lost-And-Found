@@ -41,12 +41,16 @@ export default function Browse() {
       Object.keys(next).every((key) => current[key] === next[key]) ? current : next
     );
     setPage(Number(params.get('page')) || 1);
+    setApplied(next);
   }, [params]);
   const [data, setData] = useState({ items: [], total: 0, pages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const query = useMemo(() => ({ ...filters, page, limit: 9 }), [filters, page]);
+  // `filters` is what the user is typing; `applied` is what has been submitted,
+  // so typing does not fire a request per keystroke.
+  const [applied, setApplied] = useState(null);
+  const query = useMemo(() => ({ ...(applied || filters), page, limit: 9 }), [applied, page]);
 
   useEffect(() => {
     let alive = true;
@@ -68,9 +72,8 @@ export default function Browse() {
     setPage(1);
     const next = {};
     Object.entries(filters).forEach(([key, value]) => { if (value) next[key] = value; });
+    setApplied({ ...filters });
     setParams(next);
-    // re-trigger the fetch with the same object identity
-    setFilters({ ...filters });
   };
 
   // keep the page number in the URL so a refresh or a shared link keeps it
@@ -83,12 +86,20 @@ export default function Browse() {
   };
 
   const reset = () => {
-    setFilters({ q: '', type: '', category: '', location: '', status: '', dateFrom: '', dateTo: '', sort: 'newest' });
+    const empty = { q: '', type: '', category: '', location: '', status: '', dateFrom: '', dateTo: '', sort: 'newest' };
+    setFilters(empty);
+    setApplied(empty);
     setParams({});
     setPage(1);
   };
 
   const change = (key) => (event) => setFilters({ ...filters, [key]: event.target.value });
+
+  // a stale ?page=9 must not show "Page 9 of 2" with an empty grid
+  useEffect(() => {
+    if (data.pages && page > data.pages) goToPage(data.pages);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.pages]);
 
   return (
     <div className="container section">

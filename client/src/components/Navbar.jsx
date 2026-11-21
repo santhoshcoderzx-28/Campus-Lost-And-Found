@@ -30,7 +30,7 @@ export default function Navbar() {
           Campus Lost &amp; Found
         </Link>
 
-        <nav className={`nav-links${open ? ' open' : ''}`}>
+        <nav id="primary-navigation" className={`nav-links${open ? ' open' : ''}`}>
           <NavLink to="/" end className={linkClass} onClick={() => setOpen(false)}>Home</NavLink>
           <NavLink to="/browse" className={linkClass} onClick={() => setOpen(false)}>Browse Items</NavLink>
           <NavLink to="/browse?type=lost" className={linkClass} onClick={() => setOpen(false)}>Lost</NavLink>
@@ -52,7 +52,7 @@ export default function Navbar() {
             <>
               <Link to="/profile" className="nav-link" title="My profile">
                 <User size={15} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                {user.name.split(' ')[0]}
+                {(user.name || 'My profile').split(' ')[0]}
               </Link>
               <button className="btn btn-sm btn-outline-light" onClick={handleLogout}>
                 <LogOut size={14} /> Logout
@@ -64,7 +64,13 @@ export default function Navbar() {
               <Link to="/register" className="btn btn-sm btn-accent">Register</Link>
             </>
           )}
-          <button className="nav-toggle" onClick={() => setOpen(!open)} aria-label="Menu">
+          <button
+            className="nav-toggle"
+            onClick={() => setOpen(!open)}
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            aria-expanded={open}
+            aria-controls="primary-navigation"
+          >
             {open ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>

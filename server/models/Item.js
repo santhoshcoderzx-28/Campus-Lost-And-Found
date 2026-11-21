@@ -21,10 +21,17 @@ const toApi = (row) =>
     category: row.category,
     type: row.type,
     location: row.location,
-    eventDate:
-      row.event_date instanceof Date
-        ? row.event_date.toISOString().slice(0, 10)
-        : String(row.event_date || '').slice(0, 10),
+    // pg returns a date column as local midnight, so read the calendar parts
+    // directly instead of converting to UTC (which shifted the day in IST).
+    eventDate: (() => {
+      const value = row.event_date;
+      if (value instanceof Date) {
+        const month = String(value.getMonth() + 1).padStart(2, '0');
+        const day = String(value.getDate()).padStart(2, '0');
+        return `${value.getFullYear()}-${month}-${day}`;
+      }
+      return String(value || '').slice(0, 10);
+    })(),
     identifyingFeatures: row.identifying_features || '',
     imageUrl: row.image_url || '',
     status: row.status,
@@ -133,6 +140,7 @@ async function update(id, fields) {
     identifyingFeatures: 'identifying_features',
     status: 'status',
     imageUrl: 'image_url',
+    imagePublicId: 'image_public_id',
   };
 
   const sets = [];

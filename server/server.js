@@ -40,6 +40,9 @@ app.use(
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(',').map((o) => o.trim()).filter(Boolean)
   : [];
+if (allowedOrigins.length === 0 && process.env.NODE_ENV === 'production') {
+  console.warn('CLIENT_URL is not set: CORS will reflect any origin. Set it to the site URL.');
+}
 app.use(
   cors({
     origin: allowedOrigins.length ? allowedOrigins : true, // reflect the request origin

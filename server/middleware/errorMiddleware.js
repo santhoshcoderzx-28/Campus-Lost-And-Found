@@ -7,16 +7,9 @@ const notFound = (req, res) => {
 const errorHandler = (err, req, res, next) => {
   console.error('ERROR:', err.message);
 
-  if (err.name === 'ValidationError') {
-    const message = Object.values(err.errors).map((e) => e.message).join(', ');
-    return res.status(400).json({ success: false, message });
-  }
-  if (err.name === 'CastError') {
-    return res.status(400).json({ success: false, message: `Invalid ${err.path}` });
-  }
-  if (err.code === 11000) {
-    const field = Object.keys(err.keyValue || {})[0] || 'value';
-    return res.status(400).json({ success: false, message: `That ${field} is already in use` });
+  // PostgreSQL integrity errors that mean "the input was wrong"
+  if (['23514', '23502', '22P02', '22007', '22008'].includes(err.code)) {
+    return res.status(400).json({ success: false, message: 'A field value is invalid' });
   }
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ success: false, message: 'Image must be smaller than 3 MB' });

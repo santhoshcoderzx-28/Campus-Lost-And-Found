@@ -1,0 +1,33 @@
+# Render blueprint for the single-service deployment.
+# Import it with: Render Dashboard -> New -> Blueprint -> this repository.
+services:
+  - type: web
+    name: campus-lost-found
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: server
+    buildCommand: npm install --include=dev && cd ../client && npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PGSSL
+        value: require
+      - key: SUPABASE_BUCKET
+        value: item-images
+      - key: VITE_API_URL
+        value: /api
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CLIENT_URL
+        sync: false

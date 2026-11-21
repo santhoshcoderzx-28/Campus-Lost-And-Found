@@ -2,7 +2,9 @@
 const { Pool } = require('pg');
 
 if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL is missing from .env');
+  // Never boot into a state where every request fails with an empty error.
+  console.error('DATABASE_URL is missing. Set it in .env (local) or the service environment.');
+  if (process.env.NODE_ENV === 'production') process.exit(1);
 }
 
 const pool = new Pool({

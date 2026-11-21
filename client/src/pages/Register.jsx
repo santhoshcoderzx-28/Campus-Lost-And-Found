@@ -66,12 +66,14 @@ export default function Register() {
               value={form.password}
               onChange={change('password')}
               hint="At least 6 characters"
+              autoComplete="new-password"
             />
             <PasswordInput
               id="confirm"
               label="Confirm password"
               value={form.confirm}
               onChange={change('confirm')}
+              autoComplete="new-password"
             />
           </div>
           <button className="btn btn-block" type="submit" disabled={busy}>

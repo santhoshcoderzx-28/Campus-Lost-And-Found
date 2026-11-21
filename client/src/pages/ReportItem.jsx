@@ -49,7 +49,7 @@ export default function ReportItem() {
       setError('Only JPG, PNG and WebP images are allowed');
       return;
     }
-    if (picked.size > 3 * 1024 * 1024) {
+    if (picked.size >= 3 * 1024 * 1024) {
       setError('Image must be smaller than 3 MB');
       return;
     }

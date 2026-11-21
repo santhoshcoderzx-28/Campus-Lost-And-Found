@@ -118,9 +118,8 @@ exports.deleteItem = async (req, res, next) => {
     const existing = await Item.findById(req.params.id);
     if (!existing) return res.status(404).json({ success: false, message: 'Item not found' });
 
-    await RecoveryRequest.removeByItem(existing.id);
-    await destroyImage(existing.image_public_id);
     await Item.remove(existing.id);
+    await destroyImage(existing.image_public_id);
     res.json({ success: true, message: 'Report removed by administrator' });
   } catch (error) {
     next(error);

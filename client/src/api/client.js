@@ -17,7 +17,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const url = (error.config && error.config.url) || '';
-    const isAuthEndpoint = url.startsWith('/auth/login') || url.startsWith('/auth/register');
+    const isAuthEndpoint =
+      url.startsWith('/auth/login') || url.startsWith('/auth/register') || url.startsWith('/auth/logout');
     const suspended =
       error.response && error.response.status === 403 &&
       String((error.response.data && error.response.data.message) || '').includes('suspended');
@@ -35,7 +36,12 @@ api.interceptors.response.use(
     const message =
       (error.response && error.response.data && error.response.data.message) ||
       (error.code === 'ERR_NETWORK' ? 'Cannot reach the server. Is the API running?' : 'Something went wrong');
-    return Promise.reject(new Error(message));
+    // keep the HTTP facts: callers check err.status to tell 401 from 403/500
+    const wrapped = new Error(message);
+    wrapped.status = error.response ? error.response.status : 0;
+    wrapped.code = error.code;
+    wrapped.data = error.response ? error.response.data : undefined;
+    return Promise.reject(wrapped);
   }
 );
 

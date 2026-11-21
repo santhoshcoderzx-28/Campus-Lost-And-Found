@@ -22,11 +22,17 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('clf:unauthorized', onUnauthorized);
   }, []);
   const [loading, setLoading] = useState(false);
+  // true until the stored token has been checked once, so a protected route
+  // does not redirect a valid session during the first paint
+  const [initialising, setInitialising] = useState(true);
 
   // verify the stored token once on load
   useEffect(() => {
     const token = localStorage.getItem('clf_token');
-    if (!token) return;
+    if (!token) {
+      setInitialising(false);
+      return;
+    }
     api
       .get('/auth/me')
       .then((res) => {
@@ -37,7 +43,8 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('clf_token');
         localStorage.removeItem('clf_user');
         setUser(null);
-      });
+      })
+      .finally(() => setInitialising(false));
   }, []);
 
   const persist = (data) => {
@@ -80,6 +87,7 @@ export function AuthProvider({ children }) {
   };
 
   const value = {
+    initialising,
     user,
     loading,
     isAuthenticated: Boolean(user),

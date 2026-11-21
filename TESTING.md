@@ -1,7 +1,7 @@
 # Testing checklist
 
 Run every item below against the running application and tick it off. The Postman collection in
-`server/postman/` automates the API half (30 requests, 43 assertions).
+`server/postman/` automates the API half (30 requests, 40 assertions).
 
 ## A. API tests (Postman)
 
@@ -26,7 +26,7 @@ Import `Campus_Lost_Found_v2.postman_collection.json`, start the API, run the co
 | 15 | Create future date | 400 |
 | 16 | Get one item | 200 |
 | 17 | Malformed id | 400 |
-| 18 | Update item | 200, status saved |
+| 18 | Update item (run with the admin token, because status is admin-only) | 200, status saved |
 | 19 | Invalid status | 400 |
 | 20 | My reports | 200 |
 | 21 | Submit request | 201 |
@@ -65,7 +65,7 @@ Import `Campus_Lost_Found_v2.postman_collection.json`, start the API, run the co
 | 19 | Admin route as student | `/admin` redirects to dashboard |
 | 20 | Report form validation | Short title, missing category, short description all blocked |
 | 21 | Image preview | Choosing a JPG shows the preview |
-| 22 | Image too large | 5 MB file rejected before upload |
+| 22 | Image too large | A file over 3 MB is rejected before upload |
 | 23 | Report submit | Item page opens with the saved values |
 | 24 | Duplicate alert | Reporting "Blue water bottle" as found shows a possible match |
 | 25 | Recovery request | Another user's found item shows the request form |
@@ -85,8 +85,8 @@ Import `Campus_Lost_Found_v2.postman_collection.json`, start the API, run the co
 | Width | Expected |
 |---|---|
 | 1440 px | Three-column item grid, six-column filter bar |
-| 1024 px | Two-column grid, filters wrap to two rows |
-| 768 px | Single-column cards, hamburger menu |
+| 1024 px | Single-column item grid (the 2-column rule applies at 980 px and below), filters wrap |
+| 768 px | Single-column cards; the hamburger menu appears at 900 px and below |
 | 390 px (mobile) | No horizontal scroll, touch-friendly buttons, forms full width |
 
 ## D. Security checks
@@ -97,6 +97,6 @@ Import `Campus_Lost_Found_v2.postman_collection.json`, start the API, run the co
 | 2 | Request another user's item delete | 403 |
 | 3 | Admin route without token | 401 |
 | 4 | Admin route as student | 403 |
-| 5 | Login 21 times in 15 minutes | 429 rate limit |
+| 5 | 61 failed logins in 15 minutes | 429 rate limit (successful logins are not counted) |
 | 6 | Password field in any response | never present |
 | 7 | `.env` in the repository | absent |

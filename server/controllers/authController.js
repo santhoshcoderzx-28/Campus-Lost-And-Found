@@ -18,6 +18,9 @@ exports.register = async (req, res, next) => {
     if (typeof password !== 'string' || password.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
     }
+    if (Buffer.byteLength(password, 'utf8') > 72) {
+      return res.status(400).json({ success: false, message: 'Password must be 72 bytes or fewer' });
+    }
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       return res.status(400).json({ success: false, message: 'Please enter a valid email address' });
     }
@@ -80,6 +83,7 @@ exports.updateProfile = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Name must be at least 2 characters' });
     }
     const row = await User.updateProfile(req.user.id, { name, studentId });
+    if (!row) return res.status(404).json({ success: false, message: 'Account not found' });
     res.json({ success: true, user: User.toPublic(row) });
   } catch (error) {
     if (error.code === '23514') {
@@ -98,6 +102,9 @@ exports.changePassword = async (req, res, next) => {
     }
     if (String(newPassword).length < 6) {
       return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
+    }
+    if (Buffer.byteLength(String(newPassword), 'utf8') > 72) {
+      return res.status(400).json({ success: false, message: 'Password must be 72 bytes or fewer' });
     }
 
     const ok = await User.comparePassword(String(currentPassword), req.user.password_hash);

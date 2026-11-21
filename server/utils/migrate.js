@@ -20,6 +20,7 @@ const run = async () => {
   console.log(`Running ${statements.length} statements from schema.sql`);
 
   let okCount = 0;
+  const failures = [];
   for (const statement of statements) {
     const label = statement.replace(/\s+/g, ' ').slice(0, 60);
     try {
@@ -27,7 +28,14 @@ const run = async () => {
       okCount += 1;
       console.log(`  OK    ${label}`);
     } catch (error) {
-      console.log(`  SKIP  ${label} -> ${error.message}`);
+      // The storage bucket row only exists on Supabase; anything else failing
+      // is a real migration failure and must not look like success.
+      if (label.includes('storage.buckets')) {
+        console.log(`  SKIP  ${label} -> ${error.message} (storage row only)`);
+      } else {
+        failures.push(`${label} -> ${error.message}`);
+        console.log(`  FAIL  ${label} -> ${error.message}`);
+      }
     }
   }
 
@@ -37,6 +45,19 @@ const run = async () => {
   `);
   console.log('\nStatements OK:', okCount);
   console.log('Tables in app_v2:', check.rows.map((r) => r.table_name).join(', ') || 'NONE');
+
+  if (failures.length > 0) {
+    console.error(`\n${failures.length} statement(s) failed:`);
+    failures.forEach((f) => console.error('  -', f));
+    await pool.end();
+    process.exit(1);
+  }
+
+  if (check.rows.length !== 3) {
+    console.error('\nExpected 3 tables in app_v2, found', check.rows.length);
+    await pool.end();
+    process.exit(1);
+  }
 
   await pool.end();
 };

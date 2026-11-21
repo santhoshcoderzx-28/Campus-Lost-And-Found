@@ -29,10 +29,17 @@ const run = async () => {
     await pool.query('delete from app_v2.users');
     console.log('Old data cleared');
 
+    if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD.length < 8) {
+      throw new Error('Set ADMIN_PASSWORD (at least 8 characters) in server/.env before seeding');
+    }
+    if (!process.env.DEMO_PASSWORD || process.env.DEMO_PASSWORD.length < 6) {
+      throw new Error('Set DEMO_PASSWORD (at least 6 characters) in server/.env before seeding');
+    }
+
     const admin = await User.create({
       name: 'Administrator',
       email: process.env.ADMIN_EMAIL || 'admin@saiuniversity.edu.in',
-      password: process.env.ADMIN_PASSWORD || 'admin123',
+      password: process.env.ADMIN_PASSWORD,
     });
     await pool.query(`update app_v2.users set role = 'admin' where id = $1`, [admin.id]);
 
@@ -40,7 +47,7 @@ const run = async () => {
       name: 'Demo Student',
       email: process.env.DEMO_EMAIL || 'demo@saiuniversity.edu.in',
       studentId: 'SAI2026001',
-      password: process.env.DEMO_PASSWORD || 'demo123',
+      password: process.env.DEMO_PASSWORD,
     });
 
     for (let i = 0; i < items.length; i += 1) {

@@ -9,7 +9,8 @@ exports.listItems = async (req, res, next) => {
     const { dateFrom, dateTo, reportedBy } = req.query;
     const isRealDate = (value) => {
       if (!value) return true;
-      const text = String(value);
+      if (typeof value !== 'string') return false; // ?dateFrom[]=... is not a date
+      const text = value;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
       const d = new Date(`${text}T00:00:00Z`);
       return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === text;
@@ -39,6 +40,9 @@ exports.listItems = async (req, res, next) => {
       items: items.map(Item.toApi),
     });
   } catch (error) {
+    if (['22007', '22008', '22P02'].includes(error.code)) {
+      return res.status(400).json({ success: false, message: 'A filter value is invalid' });
+    }
     next(error);
   }
 };
@@ -85,6 +89,9 @@ exports.createItem = async (req, res, next) => {
         message: 'title, description, category, type, location and eventDate are required',
       });
     }
+    if ([title, description, category, type, location].some((value) => typeof value !== 'string')) {
+      return res.status(400).json({ success: false, message: 'Text fields must be text' });
+    }
     if (!['lost', 'found'].includes(type)) {
       return res.status(400).json({ success: false, message: "type must be 'lost' or 'found'" });
     }
@@ -92,19 +99,20 @@ exports.createItem = async (req, res, next) => {
       return res.status(400).json({ success: false, message: `category must be one of ${Item.CATEGORIES.join(', ')}` });
     }
 
-    const parsedDate = new Date(eventDate);
+    // Only YYYY-MM-DD is accepted: "03/04/2026" would be read as March 4.
+    const dateText = String(eventDate);
+    const parsedDate = new Date(`${dateText}T00:00:00Z`);
     const realDate =
+      /^\d{4}-\d{2}-\d{2}$/.test(dateText) &&
       !Number.isNaN(parsedDate.getTime()) &&
-      (typeof eventDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(eventDate)
-        ? true
-        : parsedDate.toISOString().slice(0, 10) === eventDate);
+      parsedDate.toISOString().slice(0, 10) === dateText;
     if (!realDate) {
-      return res.status(400).json({ success: false, message: 'eventDate must be a real date (YYYY-MM-DD)' });
+      return res.status(400).json({ success: false, message: 'eventDate must be a real date in YYYY-MM-DD form' });
     }
-    // A date is sent as YYYY-MM-DD, which Postgres reads as UTC midnight.
-    // Allow one day of slack so "today" in IST (UTC+5:30) is never rejected.
-    const latestAllowed = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    if (parsedDate > latestAllowed) {
+    // Compare against today's date in IST (UTC+5:30), the users' own calendar,
+    // so "today" is always accepted and tomorrow is always rejected.
+    const istToday = new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    if (dateText > istToday) {
       return res.status(400).json({ success: false, message: 'Date cannot be in the future' });
     }
 
@@ -158,38 +166,39 @@ exports.updateItem = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'You can only edit your own reports' });
     }
 
+    // ---- validation first: nothing reaches storage until the request is valid ----
     const updates = {};
     ['title', 'description', 'category', 'type', 'location', 'identifyingFeatures'].forEach((field) => {
-      if (req.body[field] !== undefined) updates[field] = String(req.body[field]);
+      const value = req.body[field];
+      if (value === undefined) return;
+      if (value === null) return; // never write the string "null"
+      updates[field] = String(value);
     });
 
-    // A replacement photo: upload the new one first, then drop the old object
-    // only after the row has been updated successfully.
-    let replacedPublicId = '';
-
-    // explicit removal: the owner clears the photo without uploading a new one
-    if (!req.file && (req.body.removeImage === 'true' || req.body.removeImage === true)) {
-      updates.imageUrl = '';
-      updates.imagePublicId = '';
-      replacedPublicId = existing.image_public_id || '';
+    if (updates.category !== undefined && !Item.CATEGORIES.includes(updates.category)) {
+      return res.status(400).json({ success: false, message: `category must be one of ${Item.CATEGORIES.join(', ')}` });
     }
-
-    if (req.file) {
-      const uploaded = await uploadImage(req.file);
-      updates.imageUrl = uploaded.url;
-      updates.imagePublicId = uploaded.publicId;
-      replacedPublicId = existing.image_public_id || '';
+    if (updates.type !== undefined && !['lost', 'found'].includes(updates.type)) {
+      return res.status(400).json({ success: false, message: "type must be 'lost' or 'found'" });
+    }
+    if (updates.title !== undefined && (updates.title.trim().length < 3 || updates.title.trim().length > 100)) {
+      return res.status(400).json({ success: false, message: 'Title must be between 3 and 100 characters' });
+    }
+    if (updates.description !== undefined && (updates.description.trim().length < 5 || updates.description.trim().length > 1500)) {
+      return res.status(400).json({ success: false, message: 'Description must be between 5 and 1500 characters' });
     }
 
     if (req.body.eventDate !== undefined) {
-      const d = new Date(req.body.eventDate);
       const text = String(req.body.eventDate);
-      const real = !Number.isNaN(d.getTime()) &&
-        (!/^\d{4}-\d{2}-\d{2}$/.test(text) || d.toISOString().slice(0, 10) === text);
+      const d = new Date(`${text}T00:00:00Z`);
+      const real = /^\d{4}-\d{2}-\d{2}$/.test(text) &&
+        !Number.isNaN(d.getTime()) &&
+        d.toISOString().slice(0, 10) === text;
       if (!real) {
-        return res.status(400).json({ success: false, message: 'eventDate must be a real date (YYYY-MM-DD)' });
+        return res.status(400).json({ success: false, message: 'eventDate must be a real date in YYYY-MM-DD form' });
       }
-      if (d > new Date(Date.now() + 24 * 60 * 60 * 1000)) {
+      const istToday = new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      if (text > istToday) {
         return res.status(400).json({ success: false, message: 'Date cannot be in the future' });
       }
       updates.eventDate = d.toISOString().slice(0, 10);
@@ -207,7 +216,25 @@ exports.updateItem = async (req, res, next) => {
       updates.status = req.body.status;
     }
 
+    // ---- storage work last, so a rejected request never leaves an orphan ----
+    let replacedPublicId = '';
+    const wantsRemoval = !req.file && (req.body.removeImage === 'true' || req.body.removeImage === true);
+
+    if (wantsRemoval) {
+      updates.imageUrl = '';
+      updates.imagePublicId = '';
+      replacedPublicId = existing.image_public_id || '';
+    }
+
+    if (req.file) {
+      const uploaded = await uploadImage(req.file);
+      updates.imageUrl = uploaded.url;
+      updates.imagePublicId = uploaded.publicId;
+      replacedPublicId = existing.image_public_id || '';
+    }
+
     const row = await Item.update(req.params.id, updates);
+    if (!row) return res.status(404).json({ success: false, message: 'Item no longer exists' });
     if (replacedPublicId) await destroyImage(replacedPublicId);
     res.json({ success: true, item: Item.toApi(row) });
   } catch (error) {
@@ -231,9 +258,11 @@ exports.deleteItem = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'You can only delete your own reports' });
     }
 
-    await RecoveryRequest.removeByItem(existing.id);
-    await destroyImage(existing.image_public_id);
+    // The FK is ON DELETE CASCADE, so removing the row removes its requests.
+    // The photo goes only after the row is gone, so a failure cannot leave an
+    // item pointing at a deleted file.
     await Item.remove(existing.id);
+    await destroyImage(existing.image_public_id);
 
     res.json({ success: true, message: 'Report deleted' });
   } catch (error) {

@@ -165,7 +165,7 @@ button { font: inherit; }
 @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } .hero { padding: 52px 0 44px; } }
 
 /* ---------- Stats ---------- */
-.stats-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
 @media (max-width: 760px) { .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; text-align: center; }
 .stat-value { font-size: 26px; font-weight: 750; color: var(--navy-800); }
@@ -245,7 +245,7 @@ tr:last-child td { border-bottom: 0; }
 .meta-list dt { color: var(--muted); }
 .meta-list dd { color: var(--ink); }
 .footer { background: var(--navy-900); color: #9fb0c4; padding: 40px 0 26px; margin-top: 60px; }
-.footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 28px; }
+.footer-grid { display: grid; grid-template-columns: 1.4fr repeat(auto-fit, minmax(140px, 1fr)); gap: 28px; }
 @media (max-width: 800px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
 .footer h4 { color: #fff; font-size: 13.5px; margin-bottom: 10px; }
 .footer a { display: block; font-size: 13.5px; padding: 4px 0; color: #9fb0c4; }
