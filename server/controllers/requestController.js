@@ -117,6 +117,12 @@ exports.updateRequestStatus = async (req, res, next) => {
     const row = await RecoveryRequest.findById(req.params.id);
     if (!row) return res.status(404).json({ success: false, message: 'Request not found' });
 
+    // Nobody reviews their own request - not even an admin. Otherwise an admin
+    // could claim a student's item and approve it without the owner agreeing.
+    if (row.requester_id === req.user.id) {
+      return res.status(403).json({ success: false, message: 'You cannot review your own request' });
+    }
+
     const item = await Item.findById(row.item_id);
     const isOwner = item && item.reported_by === req.user.id;
     if (!isOwner && req.user.role !== 'admin') {
