@@ -49,7 +49,10 @@ function buildFilter({ q, type, category, location, status, dateFrom, dateTo, re
   const values = [];
 
   if (q) {
-    values.push(`%${q}%`);
+    // Escape the LIKE metacharacters so "%" is a literal, and cap the length so
+    // a 5,000-character term cannot turn into a multi-second scan.
+    const term = String(q).trim().slice(0, 100).replace(/[\\%_]/g, (m) => `\\${m}`);
+    values.push(`%${term}%`);
     const n = values.length;
     conditions.push(`(i.title ilike $${n} or i.description ilike $${n})`);
   }
@@ -93,7 +96,7 @@ async function list({ filters, page = 1, limit = 9, sort = 'newest' }) {
   const total = countRes.rows[0].total;
 
   const rows = await query(
-    `${SELECT} ${where} order by i.event_date ${direction}, i.created_at ${direction}
+    `${SELECT} ${where} order by i.event_date ${direction}, i.created_at ${direction}, i.id ${direction}
      limit $${values.length + 1} offset $${values.length + 2}`,
     [...values, limit, (page - 1) * limit]
   );

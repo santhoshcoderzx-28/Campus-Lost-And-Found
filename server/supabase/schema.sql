@@ -60,6 +60,10 @@ create index if not exists v2_items_date_idx       on app_v2.items (event_date d
 create index if not exists v2_items_reported_idx   on app_v2.items (reported_by);
 create index if not exists v2_req_item_idx         on app_v2.recovery_requests (item_id);
 create index if not exists v2_req_requester_idx    on app_v2.recovery_requests (requester_id);
+create index if not exists v2_items_date_created_idx on app_v2.items (event_date desc, created_at desc);
+create index if not exists v2_items_type_status_idx  on app_v2.items (type, status);
+create index if not exists v2_req_status_idx         on app_v2.recovery_requests (status);
+create index if not exists v2_req_created_idx        on app_v2.recovery_requests (created_at desc);
 create index if not exists v2_items_title_search   on app_v2.items using gin (to_tsvector('simple', title || ' ' || description));
 
 -- 5. ROW LEVEL SECURITY ----------------------------------------

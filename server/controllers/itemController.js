@@ -7,6 +7,15 @@ const { isUuid } = require('../utils/validate');
 exports.listItems = async (req, res, next) => {
   try {
     const { dateFrom, dateTo, reportedBy } = req.query;
+
+    // ?q[a]=1 would reach the driver as an object and crash the query
+    const textFilters = ['q', 'type', 'category', 'location', 'status', 'sort'];
+    for (const key of textFilters) {
+      const value = req.query[key];
+      if (value !== undefined && value !== '' && typeof value !== 'string') {
+        return res.status(400).json({ success: false, message: `${key} must be a single text value` });
+      }
+    }
     const isRealDate = (value) => {
       if (!value) return true;
       if (typeof value !== 'string') return false; // ?dateFrom[]=... is not a date
@@ -36,6 +45,7 @@ exports.listItems = async (req, res, next) => {
       count: items.length,
       total,
       page,
+      limit,
       pages: Math.ceil(total / limit) || 1,
       items: items.map(Item.toApi),
     });
