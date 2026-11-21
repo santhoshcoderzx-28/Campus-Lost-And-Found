@@ -12,6 +12,9 @@ export default function EditItem() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [form, setForm] = useState(null);
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState('');
+  const [currentImage, setCurrentImage] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -26,6 +29,7 @@ export default function EditItem() {
           navigate(`/items/${id}`, { replace: true });
           return;
         }
+        setCurrentImage(item.imageUrl || '');
         setForm({
           title: item.title,
           description: item.description,
@@ -39,9 +43,26 @@ export default function EditItem() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [id, navigate, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, navigate, user && user._id]);
 
   const change = (key) => (event) => setForm({ ...form, [key]: event.target.value });
+
+  const onFile = (event) => {
+    const picked = event.target.files[0];
+    if (!picked) return;
+    if (!/image\/(jpeg|jpg|png|webp)/.test(picked.type)) {
+      setError('Only JPG, PNG and WebP images are allowed');
+      return;
+    }
+    if (picked.size > 3 * 1024 * 1024) {
+      setError('Image must be smaller than 3 MB');
+      return;
+    }
+    setError('');
+    setFile(picked);
+    setPreview(URL.createObjectURL(picked));
+  };
 
   const submit = async (event) => {
     event.preventDefault();
@@ -51,7 +72,18 @@ export default function EditItem() {
 
     setBusy(true);
     try {
-      await api.put(`/items/${id}`, form);
+      const payload = { ...form };
+      if (!(user && user.role === 'admin')) delete payload.status;
+
+      if (file) {
+        // multipart so the new photo travels with the text fields
+        const body = new FormData();
+        Object.entries(payload).forEach(([key, value]) => body.append(key, value));
+        body.append('image', file);
+        await api.put(`/items/${id}`, body, { headers: { 'Content-Type': 'multipart/form-data' } });
+      } else {
+        await api.put(`/items/${id}`, payload);
+      }
       navigate(`/items/${id}`);
     } catch (err) {
       setError(err.message);
@@ -114,12 +146,26 @@ export default function EditItem() {
             <label htmlFor="identifyingFeatures">Identifying features</label>
             <input id="identifyingFeatures" className="input" value={form.identifyingFeatures} onChange={change('identifyingFeatures')} />
           </div>
-          <div className="field">
-            <label htmlFor="status">Status</label>
-            <select id="status" className="select" value={form.status} onChange={change('status')}>
-              {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
+          {/* Only an administrator may move a report through its lifecycle; the
+              API enforces this too, so the field is hidden from ordinary owners. */}
+          {user && user.role === 'admin' && (
+            <div className="field">
+              <label htmlFor="status">Status</label>
+              <select id="status" className="select" value={form.status} onChange={change('status')}>
+                {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
+
+        <div className="field">
+          <label htmlFor="image">Photo <span className="hint">(leave empty to keep the current photo)</span></label>
+          <input id="image" type="file" className="input" accept="image/jpeg,image/png,image/webp" onChange={onFile} />
+          {preview ? (
+            <img src={preview} alt="New photo preview" style={{ marginTop: 10, maxHeight: 200, borderRadius: 10, border: '1px solid var(--line)' }} />
+          ) : currentImage ? (
+            <img src={currentImage} alt="Current photo" style={{ marginTop: 10, maxHeight: 200, borderRadius: 10, border: '1px solid var(--line)' }} />
+          ) : null}
         </div>
 
         <div className="row">

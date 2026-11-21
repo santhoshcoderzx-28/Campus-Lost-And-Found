@@ -93,8 +93,13 @@ exports.createItem = async (req, res, next) => {
     }
 
     const parsedDate = new Date(eventDate);
-    if (Number.isNaN(parsedDate.getTime())) {
-      return res.status(400).json({ success: false, message: 'eventDate must be a valid date (YYYY-MM-DD)' });
+    const realDate =
+      !Number.isNaN(parsedDate.getTime()) &&
+      (typeof eventDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(eventDate)
+        ? true
+        : parsedDate.toISOString().slice(0, 10) === eventDate);
+    if (!realDate) {
+      return res.status(400).json({ success: false, message: 'eventDate must be a real date (YYYY-MM-DD)' });
     }
     // A date is sent as YYYY-MM-DD, which Postgres reads as UTC midnight.
     // Allow one day of slack so "today" in IST (UTC+5:30) is never rejected.
@@ -158,10 +163,23 @@ exports.updateItem = async (req, res, next) => {
       if (req.body[field] !== undefined) updates[field] = String(req.body[field]);
     });
 
+    // A replacement photo: upload the new one first, then drop the old object
+    // only after the row has been updated successfully.
+    let replacedPublicId = '';
+    if (req.file) {
+      const uploaded = await uploadImage(req.file);
+      updates.imageUrl = uploaded.url;
+      updates.imagePublicId = uploaded.publicId;
+      replacedPublicId = existing.image_public_id || '';
+    }
+
     if (req.body.eventDate !== undefined) {
       const d = new Date(req.body.eventDate);
-      if (Number.isNaN(d.getTime())) {
-        return res.status(400).json({ success: false, message: 'eventDate must be a valid date (YYYY-MM-DD)' });
+      const text = String(req.body.eventDate);
+      const real = !Number.isNaN(d.getTime()) &&
+        (!/^\d{4}-\d{2}-\d{2}$/.test(text) || d.toISOString().slice(0, 10) === text);
+      if (!real) {
+        return res.status(400).json({ success: false, message: 'eventDate must be a real date (YYYY-MM-DD)' });
       }
       if (d > new Date(Date.now() + 24 * 60 * 60 * 1000)) {
         return res.status(400).json({ success: false, message: 'Date cannot be in the future' });
@@ -182,6 +200,7 @@ exports.updateItem = async (req, res, next) => {
     }
 
     const row = await Item.update(req.params.id, updates);
+    if (replacedPublicId) await destroyImage(replacedPublicId);
     res.json({ success: true, item: Item.toApi(row) });
   } catch (error) {
     if (['23514', '22007', '22008'].includes(error.code)) {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import api from '../api/client.js';
+import PasswordInput from '../components/PasswordInput.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Profile() {
@@ -8,16 +9,19 @@ export default function Profile() {
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [busyProfile, setBusyProfile] = useState(false);
+  const [busyPassword, setBusyPassword] = useState(false);
 
   const saveProfile = async (event) => {
     event.preventDefault();
     setMessage(''); setError('');
+    setBusyProfile(true);
     try {
       const res = await api.put('/auth/profile', profile);
       setUser(res.data.user);
       localStorage.setItem('clf_user', JSON.stringify(res.data.user));
       setMessage('Profile updated');
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err.message); } finally { setBusyProfile(false); }
   };
 
   const savePassword = async (event) => {
@@ -25,6 +29,7 @@ export default function Profile() {
     setMessage(''); setError('');
     if (passwords.newPassword !== passwords.confirm) return setError('Passwords do not match');
     if (passwords.newPassword.length < 6) return setError('New password must be at least 6 characters');
+    setBusyPassword(true);
     try {
       await api.put('/auth/password', {
         currentPassword: passwords.currentPassword,
@@ -32,7 +37,7 @@ export default function Profile() {
       });
       setPasswords({ currentPassword: '', newPassword: '', confirm: '' });
       setMessage('Password updated');
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err.message); } finally { setBusyPassword(false); }
   };
 
   if (!user) return null;
@@ -63,7 +68,9 @@ export default function Profile() {
               <label htmlFor="studentId">Student ID</label>
               <input id="studentId" className="input" value={profile.studentId || ''} onChange={(e) => setProfile({ ...profile, studentId: e.target.value })} />
             </div>
-            <button className="btn" type="submit">Save changes</button>
+            <button className="btn" type="submit" disabled={busyProfile}>
+              {busyProfile ? 'Saving…' : 'Save changes'}
+            </button>
           </form>
         </section>
 
@@ -71,19 +78,30 @@ export default function Profile() {
           <h3>Change password</h3>
           <p className="small muted mb-2">Passwords are stored as bcrypt hashes, never as plain text.</p>
           <form onSubmit={savePassword}>
-            <div className="field">
-              <label htmlFor="currentPassword">Current password</label>
-              <input id="currentPassword" type="password" className="input" value={passwords.currentPassword} onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })} />
-            </div>
-            <div className="field">
-              <label htmlFor="newPassword">New password</label>
-              <input id="newPassword" type="password" className="input" value={passwords.newPassword} onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })} />
-            </div>
-            <div className="field">
-              <label htmlFor="confirm">Confirm new password</label>
-              <input id="confirm" type="password" className="input" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} />
-            </div>
-            <button className="btn" type="submit">Update password</button>
+            <PasswordInput
+              id="currentPassword"
+              label="Current password"
+              value={passwords.currentPassword}
+              onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
+              autoComplete="current-password"
+            />
+            <PasswordInput
+              id="newPassword"
+              label="New password"
+              value={passwords.newPassword}
+              onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
+              autoComplete="new-password"
+            />
+            <PasswordInput
+              id="confirm"
+              label="Confirm new password"
+              value={passwords.confirm}
+              onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
+              autoComplete="new-password"
+            />
+            <button className="btn" type="submit" disabled={busyPassword}>
+              {busyPassword ? 'Updating…' : 'Update password'}
+            </button>
           </form>
         </section>
       </div>

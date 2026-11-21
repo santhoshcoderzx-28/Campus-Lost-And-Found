@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import PasswordInput from '../components/PasswordInput.jsx';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -45,10 +46,13 @@ export default function Login() {
             <label htmlFor="email">University email</label>
             <input id="email" type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
           </div>
-          <div className="field">
-            <label htmlFor="password">Password</label>
-            <input id="password" type="password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
-          </div>
+          <PasswordInput
+            id="password"
+            label="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+          />
           <button className="btn btn-block" type="submit" disabled={busy}>
             <LogIn size={16} /> {busy ? 'Logging in…' : 'Login'}
           </button>

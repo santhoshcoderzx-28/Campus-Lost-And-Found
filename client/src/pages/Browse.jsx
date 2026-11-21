@@ -40,7 +40,7 @@ export default function Browse() {
     setFilters((current) =>
       Object.keys(next).every((key) => current[key] === next[key]) ? current : next
     );
-    setPage(1);
+    setPage(Number(params.get('page')) || 1);
   }, [params]);
   const [data, setData] = useState({ items: [], total: 0, pages: 1 });
   const [loading, setLoading] = useState(true);
@@ -71,6 +71,15 @@ export default function Browse() {
     setParams(next);
     // re-trigger the fetch with the same object identity
     setFilters({ ...filters });
+  };
+
+  // keep the page number in the URL so a refresh or a shared link keeps it
+  const goToPage = (nextPage) => {
+    setPage(nextPage);
+    const next = {};
+    Object.entries(filters).forEach(([key, value]) => { if (value) next[key] = value; });
+    if (nextPage > 1) next.page = String(nextPage);
+    setParams(next);
   };
 
   const reset = () => {
@@ -167,9 +176,9 @@ export default function Browse() {
 
       {data.pages > 1 && (
         <div className="pager">
-          <button className="btn btn-sm btn-ghost" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
+          <button className="btn btn-sm btn-ghost" disabled={page <= 1} onClick={() => goToPage(page - 1)}>Previous</button>
           <span className="small muted">Page {page} of {data.pages}</span>
-          <button className="btn btn-sm btn-ghost" disabled={page >= data.pages} onClick={() => setPage(page + 1)}>Next</button>
+          <button className="btn btn-sm btn-ghost" disabled={page >= data.pages} onClick={() => goToPage(page + 1)}>Next</button>
         </div>
       )}
     </div>

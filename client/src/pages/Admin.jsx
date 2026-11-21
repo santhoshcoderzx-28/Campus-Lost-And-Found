@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client.js';
 import Loader from '../components/Loader.jsx';
 import StatsRow from '../components/StatsRow.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import { showToast } from '../components/Toast.jsx';
 
 const STATUSES = ['open', 'under-review', 'matched', 'recovered', 'closed'];
 const formatDate = (value) =>
@@ -18,6 +20,8 @@ export default function Admin() {
   const [itemPages, setItemPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [busyId, setBusyId] = useState('');
+  const firstLoad = useRef(true);
 
   const load = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -41,28 +45,57 @@ export default function Admin() {
     }
   };
 
-  useEffect(() => { load(); }, [itemPage]);
+  // first paint shows the spinner, later page changes refresh the table only
+  useEffect(() => {
+    load(!firstLoad.current);
+    firstLoad.current = false;
+  }, [itemPage]);
 
   const setItemStatus = async (id, status) => {
-    try { await api.put(`/admin/items/${id}/status`, { status }); load(true); } catch (err) { setError(err.message); }
+    if (busyId) return;
+    setBusyId(id);
+    try {
+      await api.put(`/admin/items/${id}/status`, { status });
+      showToast(`Status changed to ${status}`);
+      await load(true);
+    } catch (err) { setError(err.message); } finally { setBusyId(''); }
   };
 
   const removeItem = async (id) => {
-    if (!window.confirm('Remove this report?')) return;
-    try { await api.delete(`/admin/items/${id}`); load(true); } catch (err) { setError(err.message); }
+    if (busyId) return;
+    if (!window.confirm('Remove this report? Its requests and photo are deleted too.')) return;
+    setBusyId(id);
+    try {
+      await api.delete(`/admin/items/${id}`);
+      showToast('Report removed');
+      await load(true);
+    } catch (err) { setError(err.message); } finally { setBusyId(''); }
   };
 
   const reviewRequest = async (id, status) => {
+    if (busyId) return;
+    setBusyId(id);
     try {
       await api.put(`/requests/${id}/status`, { status });
-      load(true);
+      showToast(status === 'approved' ? 'Request approved' : 'Request rejected');
+      await load(true);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setBusyId('');
     }
   };
 
   const setUserStatus = async (id, accountStatus) => {
-    try { await api.put(`/admin/users/${id}/status`, { accountStatus }); load(true); } catch (err) { setError(err.message); }
+    if (busyId) return;
+    const verb = accountStatus === 'suspended' ? 'Suspend' : 'Reactivate';
+    if (!window.confirm(`${verb} this account?`)) return;
+    setBusyId(id);
+    try {
+      await api.put(`/admin/users/${id}/status`, { accountStatus });
+      showToast(accountStatus === 'suspended' ? 'Account suspended' : 'Account reactivated');
+      await load(true);
+    } catch (err) { setError(err.message); } finally { setBusyId(''); }
   };
 
   if (loading) return <Loader />;
@@ -127,7 +160,11 @@ export default function Admin() {
         </>
       )}
 
-      {tab === 'items' && (
+      {tab === 'items' && items.length === 0 && (
+        <EmptyState title="No reports yet" text="Nothing has been reported on campus yet." />
+      )}
+
+      {tab === 'items' && items.length > 0 && (
         <>
         <div className="table-wrap">
           <table>
@@ -139,11 +176,15 @@ export default function Admin() {
                   <td><span className={`badge badge-${item.type}`}>{item.type}</span></td>
                   <td className="small">{item.reportedBy ? item.reportedBy.name : '-'}</td>
                   <td>
-                    <select className="select" style={{ width: 'auto' }} value={item.status} onChange={(e) => setItemStatus(item._id, e.target.value)}>
+                    <select className="select" style={{ width: 'auto' }} value={item.status} disabled={busyId === item._id} onChange={(e) => setItemStatus(item._id, e.target.value)}>
                       {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </td>
-                  <td><button className="btn btn-sm btn-danger" onClick={() => removeItem(item._id)}>Delete</button></td>
+                  <td>
+                    <button className="btn btn-sm btn-danger" disabled={busyId === item._id} onClick={() => removeItem(item._id)}>
+                      {busyId === item._id ? 'Working…' : 'Delete'}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -174,8 +215,10 @@ export default function Admin() {
                   <td>
                     {r.status === 'pending' ? (
                       <div className="row">
-                        <button className="btn btn-sm" onClick={() => reviewRequest(r._id, 'approved')}>Approve</button>
-                        <button className="btn btn-sm btn-danger" onClick={() => reviewRequest(r._id, 'rejected')}>Reject</button>
+                        <button className="btn btn-sm" disabled={busyId === r._id} onClick={() => reviewRequest(r._id, 'approved')}>
+                          {busyId === r._id ? 'Saving…' : 'Approve'}
+                        </button>
+                        <button className="btn btn-sm btn-danger" disabled={busyId === r._id} onClick={() => reviewRequest(r._id, 'rejected')}>Reject</button>
                       </div>
                     ) : <span className="muted small">-</span>}
                   </td>
@@ -201,9 +244,10 @@ export default function Admin() {
                   <td>
                     <button
                       className={`btn btn-sm ${u.accountStatus === 'active' ? 'btn-danger' : ''}`}
+                      disabled={busyId === u._id}
                       onClick={() => setUserStatus(u._id, u.accountStatus === 'active' ? 'suspended' : 'active')}
                     >
-                      {u.accountStatus === 'active' ? 'Suspend' : 'Reactivate'}
+                      {busyId === u._id ? 'Working…' : (u.accountStatus === 'active' ? 'Suspend' : 'Reactivate')}
                     </button>
                   </td>
                 </tr>

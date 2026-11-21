@@ -30,6 +30,7 @@ export default function ReportItem() {
   const [busy, setBusy] = useState(false);
   const [matches, setMatches] = useState(null);
   const boxRef = useRef(null);
+  const fileRef = useRef(null);
 
   // the navbar links change ?type= without remounting this page
   useEffect(() => {
@@ -55,6 +56,12 @@ export default function ReportItem() {
     setError('');
     setFile(picked);
     setPreview(URL.createObjectURL(picked));
+  };
+
+  const removePhoto = () => {
+    setFile(null);
+    setPreview('');
+    if (fileRef.current) fileRef.current.value = '';
   };
 
   const submit = async (event) => {
@@ -166,15 +173,32 @@ export default function ReportItem() {
 
         <div className="field">
           <label htmlFor="image">Photo <span className="hint">(optional, JPG/PNG/WebP, max 3 MB)</span></label>
-          <input id="image" type="file" className="input" accept="image/jpeg,image/png,image/webp" onChange={onFile} />
+          <input
+            id="image"
+            ref={fileRef}
+            type="file"
+            className="input"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={onFile}
+          />
           {preview && (
-            <img src={preview} alt="Preview" style={{ marginTop: 10, maxHeight: 220, borderRadius: 10, border: '1px solid var(--line)' }} />
+            <>
+              <img src={preview} alt="Preview" style={{ marginTop: 10, maxHeight: 220, borderRadius: 10, border: '1px solid var(--line)' }} />
+              <button type="button" className="btn btn-sm btn-ghost mt-1" onClick={removePhoto}>
+                Remove photo
+              </button>
+            </>
           )}
         </div>
 
-        <button className="btn btn-block" type="submit" disabled={busy}>
-          <Upload size={16} /> {busy ? 'Submitting…' : 'Submit report'}
-        </button>
+        <div className="row">
+          <button className="btn" type="submit" disabled={busy}>
+            <Upload size={16} /> {busy ? 'Submitting…' : 'Submit report'}
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={() => navigate('/browse')} disabled={busy}>
+            Cancel
+          </button>
+        </div>
 
         <p className="small muted mt-2">
           <AlertTriangle size={13} style={{ verticalAlign: '-2px' }} /> Do not include details that would let

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Menu, X, LogOut, User, LayoutDashboard, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -7,8 +7,14 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname, search } = useLocation();
 
   const linkClass = ({ isActive }) => `nav-link${isActive ? ' active' : ''}`;
+
+  // /report?type=lost and /report?type=found share a pathname, so the active
+  // state has to look at the query string as well.
+  const reportClass = (type) => () =>
+    `nav-link${pathname === '/report' && search.includes(`type=${type}`) ? ' active' : ''}`;
 
   const handleLogout = async () => {
     await logout();
@@ -31,8 +37,8 @@ export default function Navbar() {
           <NavLink to="/browse?type=found" className={linkClass} onClick={() => setOpen(false)}>Found</NavLink>
           {user && (
             <>
-              <NavLink to="/report?type=lost" className="nav-link" onClick={() => setOpen(false)}>Report Lost</NavLink>
-              <NavLink to="/report?type=found" className="nav-link" onClick={() => setOpen(false)}>Report Found</NavLink>
+              <NavLink to="/report?type=lost" className={reportClass('lost')} onClick={() => setOpen(false)}>Report Lost</NavLink>
+              <NavLink to="/report?type=found" className={reportClass('found')} onClick={() => setOpen(false)}>Report Found</NavLink>
               <NavLink to="/dashboard" className={linkClass} onClick={() => setOpen(false)}>Dashboard</NavLink>
             </>
           )}

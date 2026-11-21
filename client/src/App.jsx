@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
+import Toast from './components/Toast.jsx';
 import Footer from './components/Footer.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Landing from './pages/Landing.jsx';
@@ -76,6 +77,7 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
+      <Toast />
     </div>
   );
 }

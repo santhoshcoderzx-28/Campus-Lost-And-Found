@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import PasswordInput from '../components/PasswordInput.jsx';
 import { UserPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -59,15 +60,19 @@ export default function Register() {
             <input id="studentId" className="input" value={form.studentId} onChange={change('studentId')} />
           </div>
           <div className="form-row">
-            <div className="field">
-              <label htmlFor="password">Password</label>
-              <input id="password" type="password" className="input" value={form.password} onChange={change('password')} />
-              <span className="hint">At least 6 characters</span>
-            </div>
-            <div className="field">
-              <label htmlFor="confirm">Confirm password</label>
-              <input id="confirm" type="password" className="input" value={form.confirm} onChange={change('confirm')} />
-            </div>
+            <PasswordInput
+              id="password"
+              label="Password"
+              value={form.password}
+              onChange={change('password')}
+              hint="At least 6 characters"
+            />
+            <PasswordInput
+              id="confirm"
+              label="Confirm password"
+              value={form.confirm}
+              onChange={change('confirm')}
+            />
           </div>
           <button className="btn btn-block" type="submit" disabled={busy}>
             <UserPlus size={16} /> {busy ? 'Creating account…' : 'Register'}

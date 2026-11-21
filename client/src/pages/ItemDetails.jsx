@@ -4,6 +4,7 @@ import { MapPin, Calendar, User, Package } from 'lucide-react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import Loader from '../components/Loader.jsx';
+import { showToast } from '../components/Toast.jsx';
 
 const formatDate = (value) =>
   value ? new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
@@ -18,6 +19,7 @@ export default function ItemDetails() {
   const [feedback, setFeedback] = useState('');
   const [requests, setRequests] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [busyRequestId, setBusyRequestId] = useState('');
 
   const isOwner = Boolean(user && item && item.reportedBy && item.reportedBy._id === user._id);
 
@@ -57,14 +59,20 @@ export default function ItemDetails() {
   };
 
   const review = async (requestId, status) => {
+    if (busyRequestId) return;
+    setBusyRequestId(requestId);
     try {
       await api.put(`/requests/${requestId}/status`, { status });
+      showToast(status === 'approved' ? 'Request approved, item marked recovered' : 'Request rejected');
       const res = await api.get(`/requests/item/${id}`);
       setRequests(res.data.requests);
       const refreshed = await api.get(`/items/${id}`);
       setItem(refreshed.data.item);
     } catch (err) {
-      setFeedback(err.message);
+      // a 401 is a dead session, already handled by the interceptor
+      if (err.status !== 401) setFeedback(err.message);
+    } finally {
+      setBusyRequestId('');
     }
   };
 
@@ -126,8 +134,10 @@ export default function ItemDetails() {
                   {r.requester.studentId && <p className="small muted">ID: {r.requester.studentId}</p>}
                   {r.status === 'pending' && (
                     <div className="row mt-1">
-                      <button className="btn btn-sm" onClick={() => review(r._id, 'approved')}>Approve</button>
-                      <button className="btn btn-sm btn-danger" onClick={() => review(r._id, 'rejected')}>Reject</button>
+                      <button className="btn btn-sm" disabled={busyRequestId === r._id} onClick={() => review(r._id, 'approved')}>
+                        {busyRequestId === r._id ? 'Saving…' : 'Approve'}
+                      </button>
+                      <button className="btn btn-sm btn-danger" disabled={busyRequestId === r._id} onClick={() => review(r._id, 'rejected')}>Reject</button>
                     </div>
                   )}
                 </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import api from '../api/client.js';
+import { showToast } from '../components/Toast.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import Loader from '../components/Loader.jsx';
 import EmptyState from '../components/EmptyState.jsx';
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [recent, setRecent] = useState([]);
+  const [busyId, setBusyId] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -43,18 +45,24 @@ export default function Dashboard() {
   useEffect(() => { load(); }, []);
 
   const review = async (id, status) => {
+    if (busyId) return;
+    setBusyId(id);
     try {
       await api.put(`/requests/${id}/status`, { status });
-      load();
-    } catch (err) { setError(err.message); }
+      showToast(status === 'approved' ? 'Request approved' : 'Request rejected');
+      await load();
+    } catch (err) { setError(err.message); } finally { setBusyId(''); }
   };
 
   const removeReport = async (id) => {
+    if (busyId) return;
     if (!window.confirm('Delete this report permanently?')) return;
+    setBusyId(id);
     try {
       await api.delete(`/items/${id}`);
-      load();
-    } catch (err) { setError(err.message); }
+      showToast('Report deleted');
+      await load();
+    } catch (err) { setError(err.message); } finally { setBusyId(''); }
   };
 
   return (
@@ -121,7 +129,9 @@ export default function Dashboard() {
                           <td>
                             <div className="row">
                               <Link to={`/items/${item._id}`} className="btn btn-sm btn-ghost">Open</Link>
-                              <button className="btn btn-sm btn-danger" onClick={() => removeReport(item._id)}>Delete</button>
+                              <button className="btn btn-sm btn-danger" disabled={busyId === item._id} onClick={() => removeReport(item._id)}>
+                                {busyId === item._id ? 'Deleting…' : 'Delete'}
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -150,8 +160,10 @@ export default function Dashboard() {
                         <td>
                           {r.status === 'pending' ? (
                             <div className="row">
-                              <button className="btn btn-sm" onClick={() => review(r._id, 'approved')}>Approve</button>
-                              <button className="btn btn-sm btn-danger" onClick={() => review(r._id, 'rejected')}>Reject</button>
+                              <button className="btn btn-sm" disabled={busyId === r._id} onClick={() => review(r._id, 'approved')}>
+                                {busyId === r._id ? 'Saving…' : 'Approve'}
+                              </button>
+                              <button className="btn btn-sm btn-danger" disabled={busyId === r._id} onClick={() => review(r._id, 'rejected')}>Reject</button>
                             </div>
                           ) : <span className="muted small">-</span>}
                         </td>
