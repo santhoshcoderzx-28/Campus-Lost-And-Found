@@ -7,7 +7,7 @@ export default function Loader({ label = 'Loading…' }) {
   );
 }
 
-export function CardSkeletonGrid({ count = 6 }) {
+export function CardSkeletonGrid({ count = 9 }) {
   return (
     <div className="grid grid-3">
       {Array.from({ length: count }).map((_, i) => (

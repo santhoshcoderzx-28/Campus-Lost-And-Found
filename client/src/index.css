@@ -24,6 +24,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body, #root { height: 100%; }
+html { scroll-padding-top: 80px; }
 
 body {
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
@@ -52,8 +53,10 @@ button { font: inherit; }
 }
 .navbar-inner {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; height: 68px;
+  gap: 16px; height: 68px; flex-wrap: nowrap;
 }
+.brand { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.nav-actions, .nav-toggle { flex: 0 0 auto; }
 .brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 700; letter-spacing: 0.2px; }
 .brand-mark {
   width: 34px; height: 34px; border-radius: 10px;
@@ -79,7 +82,7 @@ button { font: inherit; }
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: none;
   }
-  .nav-links.open { display: flex; }
+  .nav-links.open { display: flex; max-height: calc(100vh - 68px); overflow-y: auto; }
   .nav-link { padding: 11px 12px; }
 }
 
@@ -122,7 +125,7 @@ button { font: inherit; }
 .item-media { height: 168px; background: #e8eef5 center/cover no-repeat; display: grid; place-items: center; color: #94a3b8; }
 .item-body { padding: 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
 .item-title { font-weight: 650; font-size: 15.5px; color: var(--ink); }
-.item-meta { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.item-meta { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
 
 /* ---------- Badges ---------- */
 .badge {
@@ -193,13 +196,20 @@ button { font: inherit; }
   border: 1px solid var(--line); background: #fff; color: var(--text);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
+.input:focus:not(:focus-visible), .select:focus:not(:focus-visible), .textarea:focus:not(:focus-visible) {
+  outline: none;
+}
 .input:focus, .select:focus, .textarea:focus {
-  outline: none; border-color: var(--navy-700); box-shadow: 0 0 0 3px rgba(27, 51, 80, 0.12);
+  border-color: var(--navy-700); box-shadow: 0 0 0 3px rgba(27, 51, 80, 0.12);
+}
+.input:focus-visible, .select:focus-visible, .textarea:focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 2px;
 }
 .textarea { min-height: 104px; resize: vertical; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
-.filters { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+.filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end; }
+.filters > .btn { justify-self: start; }
 @media (max-width: 980px) { .filters { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 560px) { .filters { grid-template-columns: 1fr; } }
 
@@ -211,7 +221,7 @@ button { font: inherit; }
 
 /* ---------- Tables ---------- */
 .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
-table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 720px; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 560px; }
 th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { background: #f8fafc; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
 tr:last-child td { border-bottom: 0; }
@@ -233,7 +243,7 @@ tr:last-child td { border-bottom: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .skeleton {
   background: linear-gradient(90deg, #eef2f7 25%, #e3e9f1 37%, #eef2f7 63%);
-  background-size: 400% 100%; animation: shimmer 1.3s ease infinite; border-radius: var(--radius); height: 268px;
+  background-size: 400% 100%; animation: shimmer 1.3s ease infinite; border-radius: var(--radius); height: 360px;
 }
 @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
 .empty { text-align: center; padding: 46px 20px; color: var(--muted); }
@@ -277,6 +287,7 @@ tr:last-child td { border-bottom: 0; }
 
 /* ---------- toasts ---------- */
 .toast-stack {
+  pointer-events: none;
   position: fixed;
   right: 18px;
   bottom: 18px;

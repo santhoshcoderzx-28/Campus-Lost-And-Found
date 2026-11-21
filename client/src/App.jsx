@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Toast from './components/Toast.jsx';
 import Footer from './components/Footer.jsx';
@@ -16,9 +17,18 @@ import EditItem from './pages/EditItem.jsx';
 import Info from './pages/Info.jsx';
 import NotFound from './pages/NotFound.jsx';
 
+// Without this a link clicked at the bottom of one page opens the next page
+// already scrolled down, so its heading is never seen.
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
+
 export default function App() {
   return (
     <div className="app-shell">
+      <ScrollToTop />
       <Navbar />
       <main className="app-main">
         <Routes>
