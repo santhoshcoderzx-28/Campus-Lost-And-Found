@@ -57,6 +57,18 @@ export function AuthProvider({ children }) {
     setUser(data.user);
   };
 
+  // re-read the signed-in user, e.g. after verifying an email
+  const refreshUser = async () => {
+    try {
+      const res = await api.get('/auth/me');
+      setUser(res.data.user);
+      localStorage.setItem('clf_user', JSON.stringify(res.data.user));
+      return res.data.user;
+    } catch (err) {
+      return null;
+    }
+  };
+
   const login = async (email, password) => {
     setLoading(true);
     try {
@@ -92,6 +104,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     initialising,
+    refreshUser,
     user,
     loading,
     isAuthenticated: Boolean(user),

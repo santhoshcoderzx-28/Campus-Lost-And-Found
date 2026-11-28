@@ -79,6 +79,10 @@ Base path `/api`. Every response is `{ success, ... }`.
 | POST | `/auth/logout` | token | Acknowledge logout (stateless JWT) |
 | PUT | `/auth/profile` | token | Update name and student ID |
 | PUT | `/auth/password` | token | Change password (400 if the current one is wrong) |
+| POST | `/auth/verify-email` | public (5/15 min) | Confirm an email address with the token from the link |
+| POST | `/auth/resend-verification` | token (5/15 min) | Send a fresh verification link |
+| POST | `/auth/forgot-password` | public (5/15 min) | Send a password reset link (same answer for unknown emails) |
+| POST | `/auth/reset-password` | public (5/15 min) | Set a new password with the token, 1 hour expiry |
 
 ### Items — `routes/itemRoutes.js`
 
@@ -187,6 +191,9 @@ Two terminals are needed: the API on 5000 and Vite on 5173.
 | `JWT_SECRET` | auth | Long random string |
 | `JWT_EXPIRES_IN` | auth | e.g. `7d` |
 | `CLIENT_URL` | `server.js` | Allowed CORS origin(s), comma separated |
+| `SMTP_HOST` / `SMTP_PORT` | `config/mailer.js` | `smtp.gmail.com` / `587` |
+| `SMTP_USER` / `SMTP_PASS` | `config/mailer.js` | A Gmail address and its 16-character **app password** |
+| `MAIL_FROM` | `config/mailer.js` | Sender shown in the email |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | `utils/seed.js` | The admin account created by the seed |
 | `DEMO_EMAIL` / `DEMO_PASSWORD` | `utils/seed.js` | The sample student account |
 
@@ -296,8 +303,10 @@ TESTING.md                     manual test checklist
 
 ## Known limitations
 
-- No email notifications and no forgot-password flow: no mail provider is configured, and both were
-  declared out of scope for the assignment.
+- Email is used only for address verification and password reset; there are no notifications when a
+  matching item is posted.
+- Verification is soft: an unverified account can sign in and use the site, and a banner keeps
+  asking until the address is confirmed.
 - One photo per item; photos are replaced or removed, not collected.
 - `GET /api/admin/requests` returns every request; the admin table pages in the browser.
 - Search uses `ILIKE`; at tens of thousands of rows this should move to the GIN index.

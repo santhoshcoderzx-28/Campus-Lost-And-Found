@@ -16,6 +16,10 @@ import Admin from './pages/Admin.jsx';
 import EditItem from './pages/EditItem.jsx';
 import Info from './pages/Info.jsx';
 import NotFound from './pages/NotFound.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
+import VerifyEmail from './pages/VerifyEmail.jsx';
+import VerifyBanner from './components/VerifyBanner.jsx';
 
 // Without this a link clicked at the bottom of one page opens the next page
 // already scrolled down, so its heading is never seen.
@@ -30,6 +34,7 @@ export default function App() {
     <div className="app-shell">
       <ScrollToTop />
       <Navbar />
+      <VerifyBanner />
       <main className="app-main">
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -82,6 +87,10 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

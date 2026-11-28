@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const { query } = require('../config/database');
 
 const PUBLIC_COLUMNS =
-  'id, name, email, student_id, role, account_status, created_at';
+  'id, name, email, student_id, role, account_status, email_verified, created_at';
 
 const hashPassword = (plain) => bcrypt.hash(plain, 10);
 const comparePassword = (plain, hash) => bcrypt.compare(plain, hash);
@@ -17,6 +17,7 @@ const toPublic = (row) =>
     studentId: row.student_id || '',
     role: row.role,
     accountStatus: row.account_status,
+    emailVerified: row.email_verified !== false,
     createdAt: row.created_at,
   };
 
@@ -38,15 +39,68 @@ async function findByEmail(email) {
   return rows[0] || null;
 }
 
-async function create({ name, email, studentId, password }) {
+async function create({ name, email, studentId, password, verificationToken = null, verificationExpires = null }) {
   const passwordHash = await hashPassword(password);
   const { rows } = await query(
-    `insert into app_v2.users (name, email, student_id, password_hash)
-     values ($1, $2, $3, $4)
+    `insert into app_v2.users
+       (name, email, student_id, password_hash, email_verified, verification_token, verification_expires)
+     values ($1, $2, $3, $4, $5, $6, $7)
      returning ${PUBLIC_COLUMNS}`,
-    [name.trim(), String(email).toLowerCase().trim(), studentId || '', passwordHash]
+    [
+      name.trim(),
+      String(email).toLowerCase().trim(),
+      studentId || '',
+      passwordHash,
+      verificationToken ? false : true,
+      verificationToken,
+      verificationExpires,
+    ]
   );
   return rows[0];
+}
+
+// ---- email verification ----
+async function setVerificationToken(id, token, expires) {
+  await query(
+    'update app_v2.users set verification_token = $1, verification_expires = $2 where id = $3',
+    [token, expires, id]
+  );
+}
+
+async function findByVerificationToken(token) {
+  const { rows } = await query(
+    'select * from app_v2.users where verification_token = $1 and verification_expires > now()',
+    [token]
+  );
+  return rows[0] || null;
+}
+
+async function markVerified(id) {
+  await query(
+    'update app_v2.users set email_verified = true, verification_token = null, verification_expires = null where id = $1',
+    [id]
+  );
+}
+
+// ---- password reset ----
+async function setResetToken(email, token, expires) {
+  const { rowCount } = await query(
+    'update app_v2.users set reset_token = $1, reset_expires = $2 where email = $3',
+    [token, expires, String(email).toLowerCase().trim()]
+  );
+  return rowCount > 0;
+}
+
+async function findByResetToken(token) {
+  const { rows } = await query(
+    'select * from app_v2.users where reset_token = $1 and reset_expires > now()',
+    [token]
+  );
+  return rows[0] || null;
+}
+
+async function clearResetToken(id) {
+  await query('update app_v2.users set reset_token = null, reset_expires = null where id = $1', [id]);
 }
 
 async function updatePassword(id, password) {
@@ -95,4 +149,10 @@ module.exports = {
   updateStatus,
   list,
   count,
+  setVerificationToken,
+  findByVerificationToken,
+  markVerified,
+  setResetToken,
+  findByResetToken,
+  clearResetToken,
 };

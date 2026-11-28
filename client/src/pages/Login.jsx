@@ -53,6 +53,11 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
           />
+          <p className="small right mb-2">
+            <Link to="/forgot-password" style={{ color: 'var(--navy-700)', fontWeight: 600 }}>
+              Forgot password?
+            </Link>
+          </p>
           <button className="btn btn-block" type="submit" disabled={busy}>
             <LogIn size={16} /> {busy ? 'Logging in…' : 'Login'}
           </button>

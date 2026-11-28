@@ -18,8 +18,23 @@ create table if not exists app_v2.users (
   password_hash  text not null,
   role           text not null default 'user' check (role in ('user', 'admin')),
   account_status text not null default 'active' check (account_status in ('active', 'suspended')),
+  email_verified      boolean not null default true,
+  verification_token  text,
+  verification_expires timestamptz,
+  reset_token         text,
+  reset_expires       timestamptz,
   created_at     timestamptz not null default now()
 );
+
+-- Existing databases created before email verification: add the columns.
+alter table app_v2.users add column if not exists email_verified      boolean not null default true;
+alter table app_v2.users add column if not exists verification_token  text;
+alter table app_v2.users add column if not exists verification_expires timestamptz;
+alter table app_v2.users add column if not exists reset_token         text;
+alter table app_v2.users add column if not exists reset_expires       timestamptz;
+
+create index if not exists v2_users_verify_idx on app_v2.users (verification_token);
+create index if not exists v2_users_reset_idx  on app_v2.users (reset_token);
 
 -- 2. ITEMS -----------------------------------------------------
 create table if not exists app_v2.items (
